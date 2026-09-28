@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Design Catalogue Visual Inspector (Auto)</title>
+  <title>Tanishq Available Designs</title>
   <!-- Decompression & Decryption Engines -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
@@ -54,7 +54,6 @@
     /* Header & Panel */
     .header { width: 100%; max-width: 1250px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
     .header h2 { margin: 0; font-size: 1.35rem; color: var(--primary); }
-    .header p { margin: 2px 0 0 0; font-size: 0.78rem; color: var(--text-muted); }
 
     .control-panel { width: 100%; max-width: 1250px; background: var(--panel-bg); padding: 12px; border-radius: 10px; border: 1px solid var(--border); margin-bottom: 10px; display: flex; flex-direction: column; gap: 8px; }
     
@@ -79,7 +78,6 @@
     .dropdown-menu.show { display: flex; }
     .dropdown-menu-wide { min-width: 440px; max-width: 520px; max-height: 380px; }
 
-    /* Dropdown Toolbar with Select All & Search */
     .dropdown-toolbar { display: flex; flex-direction: column; gap: 6px; margin-bottom: 6px; border-bottom: 1px solid var(--border); padding-bottom: 6px; }
     .select-all-row { display: flex; align-items: center; justify-content: space-between; font-size: 0.75rem; color: var(--primary); cursor: pointer; padding: 2px 4px; }
     .select-all-row:hover { background: #1e293b; border-radius: 4px; }
@@ -217,9 +215,6 @@
     .export-option:hover { background: #1e293b; }
     .export-option:last-child { border-bottom: none; }
     .export-option small { font-size: 0.68rem; color: var(--text-muted); }
-
-    .hint { font-size: 0.72rem; color: #64748b; text-align: center; margin-top: 6px; }
-    kbd { background: #090e1a; padding: 2px 5px; border-radius: 3px; border: 1px solid var(--border); color: #94a3b8; }
 
     /* Floating Lightbox Viewer */
     .lightbox-modal {
@@ -361,10 +356,7 @@
   </div>
 
   <div class="header">
-    <div>
-      <h2>Design Catalogue Visual Inspector (Auto)</h2>
-      <p>Encrypted In-Memory Feed • Optimized for Desktop & Mobile</p>
-    </div>
+    <h2>Tanishq Available Designs</h2>
     <div style="display: flex; gap: 8px; align-items: center;">
       <!-- Dual Export Menu Button -->
       <div class="export-container">
@@ -647,8 +639,6 @@
     </div>
   </div>
 
-  <div class="hint">Shortcuts: <kbd>→</kbd> Next / Skip &nbsp;|&nbsp; <kbd>←</kbd> Previous &nbsp;|&nbsp; <kbd>Space</kbd> Toggle All SKUs &nbsp;|&nbsp; <kbd>Esc</kbd> Close Zoom</div>
-
   <script>
     let rawData = [];
     let filteredGroups = [];
@@ -689,7 +679,6 @@
       if (!isShown) menu.classList.add('show');
     }
 
-    // Initiate encrypted dataset download immediately
     window.addEventListener('DOMContentLoaded', () => {
       dataFetchPromise = fetch(`data.enc?t=${Date.now()}`)
         .then(res => {
@@ -706,7 +695,6 @@
         });
     });
 
-    // Decrypt flow that safely awaits download completion
     async function decryptAndLoad() {
       const pin = document.getElementById('passInput').value.trim();
       const errBox = document.getElementById('authErr');
@@ -782,7 +770,6 @@
       }
     }
 
-    // Multi-attribute live search (SKU, Design, AG, Category, Group)
     function handleUniversalSearch() {
       applyFilters();
     }
@@ -794,14 +781,12 @@
       const searchTerms = (document.getElementById('skuSearchInput')?.value || '').trim().toLowerCase().split(/\s+/).filter(Boolean);
 
       return rawData.filter(r => {
-        // Universal multi-term search
         if (searchTerms.length > 0) {
           const searchableText = `${r._sku} ${r._design} ${r._ag} ${r._cat} ${r._group}`.toLowerCase();
           const allMatch = searchTerms.every(term => searchableText.includes(term));
           if (!allMatch) return false;
         }
 
-        // Multi-select criteria
         for (const key of Object.keys(filterFields)) {
           if (key === excludeKey) continue;
           const sel = filterFields[key].selected;
@@ -811,7 +796,6 @@
           }
         }
 
-        // Weight numeric checks
         if (wtOp !== 'any' && !isNaN(wt1)) {
           const w = r._wt;
           if (wtOp === 'eq' && Math.abs(w - wt1) > 0.0001) return false;
@@ -839,7 +823,6 @@
           counts[val] = (counts[val] || 0) + 1;
         });
 
-        // Ensure user's explicitly selected items remain listed even if count is 0
         filterFields[key].selected.forEach(selVal => {
           if (!counts[selVal]) counts[selVal] = 0;
         });
@@ -871,7 +854,6 @@
           listContainer.appendChild(item);
         });
 
-        // Update Select All Checkbox state
         const selectAllChk = document.getElementById(`chk-all-${key}`);
         const selectAllLbl = document.getElementById(`lbl-all-${key}`);
         if (selectAllChk) {
@@ -886,7 +868,6 @@
       });
     }
 
-    // Toggle Select All Options for a specific dropdown
     function toggleSelectAllDropdown(key) {
       const eligibleRows = getContextualRows(key);
       const colField = filterFields[key].col;
@@ -895,10 +876,8 @@
       const isAllCurrentlySelected = allVals.length > 0 && allVals.every(v => filterFields[key].selected.has(v));
 
       if (isAllCurrentlySelected) {
-        // Deselect all
         filterFields[key].selected.clear();
       } else {
-        // Select all available
         allVals.forEach(v => filterFields[key].selected.add(v));
       }
       applyFilters();
@@ -1104,7 +1083,6 @@
       `;
     }
 
-    /* Touch Swipe Gesture Detection for Lightbox */
     let touchStartX = 0;
     let touchEndX = 0;
     const lightboxBody = document.getElementById('lightboxBody');
