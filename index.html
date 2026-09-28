@@ -219,12 +219,15 @@
       justify-content: space-between;
       align-items: center;
       margin-bottom: 10px;
+      gap: 10px;
+      flex-wrap: wrap;
     }
     .lightbox-meta {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 8px;
       color: #fff;
+      flex-wrap: wrap;
     }
     .lightbox-badge {
       font-size: 1.3rem;
@@ -236,9 +239,16 @@
       font-size: 0.8rem;
       color: var(--text-muted);
       background: #131c2e;
-      padding: 3px 8px;
+      padding: 4px 8px;
       border-radius: 4px;
       border: 1px solid var(--border);
+    }
+    .lightbox-tag-wt {
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: #38bdf8;
+      background: #0c213d;
+      border-color: #0284c7;
     }
     .lightbox-close-btn {
       background: #1e293b;
@@ -305,6 +315,9 @@
 
       .lightbox-body { height: calc(100vh - 200px); }
       .lightbox-actions-bar { padding: 8px 12px; }
+      .lightbox-header { margin-bottom: 6px; }
+      .lightbox-badge { font-size: 1.1rem; }
+      .lightbox-tag { font-size: 0.72rem; padding: 2px 6px; }
     }
   </style>
 </head>
@@ -529,6 +542,7 @@
       <div class="lightbox-meta">
         <span class="lightbox-badge" id="modalDesignBadge">---</span>
         <span class="lightbox-tag" id="modalMetaTag">-</span>
+        <span class="lightbox-tag lightbox-tag-wt" id="modalWtTag">WT: -</span>
         <span class="lightbox-tag" id="modalIdxTag">0 of 0</span>
       </div>
       <button class="lightbox-close-btn" onclick="closeLightbox()" title="Close (Esc)">✕</button>
@@ -819,8 +833,25 @@
       const curGroup = filteredGroups[currentIdx];
       const dCode = (curGroup.design || '').trim().toUpperCase();
 
+      let activeRow = null;
+      if (focusedSku) {
+        activeRow = curGroup.rows.find(r => r._sku === focusedSku);
+      }
+
       document.getElementById('modalDesignBadge').innerText = dCode;
       document.getElementById('modalMetaTag').innerText = `${curGroup.rows[0]._cat} • ${curGroup.rows[0]._karat}K`;
+      
+      // Update weight pill inside zoom view
+      const modalWtTag = document.getElementById('modalWtTag');
+      if (activeRow) {
+        modalWtTag.innerText = `WT: ${activeRow._wt.toFixed(3)} g (${activeRow._size || 'Std'})`;
+      } else {
+        const weights = curGroup.rows.map(r => r._wt);
+        const minWt = Math.min(...weights).toFixed(3);
+        const maxWt = Math.max(...weights).toFixed(3);
+        modalWtTag.innerText = (minWt === maxWt) ? `WT: ${minWt} g` : `WT: ${minWt} - ${maxWt} g`;
+      }
+
       document.getElementById('modalIdxTag').innerText = `${currentIdx + 1} of ${filteredGroups.length}`;
 
       const modalImg = document.getElementById('modalImg');
@@ -899,10 +930,10 @@
     function handleSwipeGesture() {
       const threshold = 50;
       if (touchEndX < touchStartX - threshold) {
-        navigateDesign(1); // Swipe left -> Next
+        navigateDesign(1);
       }
       if (touchEndX > touchStartX + threshold) {
-        navigateDesign(-1); // Swipe right -> Previous
+        navigateDesign(-1);
       }
     }
 
