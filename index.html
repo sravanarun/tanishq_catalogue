@@ -3,11 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Tanishq Available Designs</title>
+  <title>South1 Catalogue</title>
   <!-- Decompression & Decryption Engines -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <!-- PDF Generation Engine -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <style>
     :root {
       --bg: #090e1a;
@@ -20,7 +22,6 @@
       --text: #f1f5f9;
       --text-muted: #94a3b8;
     }
-
     * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
     body { background: var(--bg); color: var(--text); margin: 0; padding: 12px 14px 80px 14px; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
 
@@ -54,27 +55,21 @@
     /* Header & Panel */
     .header { width: 100%; max-width: 1250px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
     .header h2 { margin: 0; font-size: 1.35rem; color: var(--primary); }
-
     .control-panel { width: 100%; max-width: 1250px; background: var(--panel-bg); padding: 12px; border-radius: 10px; border: 1px solid var(--border); margin-bottom: 10px; display: flex; flex-direction: column; gap: 8px; }
     
-    /* Filter Grid */
-    .filter-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 6px; width: 100%; }
+    .filter-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(135px, 1fr)); gap: 6px; width: 100%; }
     .filter-box { display: flex; flex-direction: column; gap: 3px; position: relative; }
-    .filter-label { font-size: 0.65rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
-
-    .filter-box-wide {
-      grid-column: span 2;
-      min-width: 280px;
-    }
+    .filter-label { font-size: 0.65rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; }
 
     .search-input { background: #090e1a; border: 1px solid var(--border); color: #fff; padding: 7px 10px; border-radius: 6px; font-size: 0.78rem; outline: none; width: 100%; }
     .search-input:focus { border-color: var(--primary); }
+    .filter-box-wide { grid-column: span 2; min-width: 250px; }
 
     .dropdown-btn { background: #090e1a; color: var(--text); border: 1px solid var(--border); padding: 7px 10px; border-radius: 6px; font-size: 0.78rem; text-align: left; cursor: pointer; display: flex; justify-content: space-between; align-items: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .dropdown-btn:hover { border-color: var(--primary); }
     .dropdown-btn::after { content: "▾"; font-size: 0.75rem; margin-left: 6px; color: var(--text-muted); flex-shrink: 0; }
-
-    .dropdown-menu { display: none; position: absolute; top: calc(100% + 4px); left: 0; min-width: 230px; max-width: 320px; max-height: 310px; background: #0b1324; border: 1px solid var(--border); border-radius: 8px; z-index: 1000; flex-direction: column; padding: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.8); }
+    
+    .dropdown-menu { display: none; position: absolute; top: calc(100% + 4px); left: 0; min-width: 220px; max-height: 310px; background: #0b1324; border: 1px solid var(--border); border-radius: 8px; z-index: 1000; flex-direction: column; padding: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.8); }
     .dropdown-menu.show { display: flex; }
     .dropdown-menu-wide { min-width: 440px; max-width: 520px; max-height: 380px; }
 
@@ -88,26 +83,22 @@
     .dropdown-list { overflow-y: auto; display: flex; flex-direction: column; gap: 3px; max-height: 180px; }
     .dropdown-menu-wide .dropdown-list { max-height: 260px; }
 
-    .dropdown-item { display: flex; align-items: flex-start; gap: 8px; font-size: 0.76rem; cursor: pointer; padding: 5px 6px; border-radius: 4px; line-height: 1.35; border-bottom: 1px solid #141e33; }
+    .dropdown-item { display: flex; align-items: flex-start; gap: 6px; font-size: 0.76rem; cursor: pointer; padding: 5px 6px; border-radius: 4px; word-break: break-all; }
     .dropdown-item:hover { background: #1e293b; }
-    .dropdown-item input { cursor: pointer; margin-top: 2px; flex-shrink: 0; }
-    .ag-desc { font-size: 0.74rem; color: #cbd5e1; word-break: break-word; }
+    .dropdown-item input { margin-top: 2px; flex-shrink: 0; }
 
-    /* Weight Filter Box */
     .weight-row { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
     .weight-row select, .weight-row input { background: #090e1a; border: 1px solid var(--border); color: var(--text); padding: 6px 8px; border-radius: 6px; font-size: 0.78rem; outline: none; }
     .weight-row select { width: 120px; }
     .weight-row input { width: 75px; }
 
-    /* Stats Bar */
     .stats-bar { width: 100%; max-width: 1250px; display: flex; justify-content: space-between; align-items: center; background: #0f172a; padding: 8px 12px; border-radius: 6px; border: 1px solid var(--border); margin-bottom: 10px; font-size: 0.78rem; color: var(--text-muted); flex-wrap: wrap; gap: 6px; }
     .stats-bar b { color: var(--primary); }
 
-    /* Main Responsive Card Layout */
+    /* Responsive Main Card */
     .main-card { width: 100%; max-width: 1250px; background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 14px; }
     .card-top { display: flex; gap: 20px; align-items: flex-start; }
 
-    /* Image Box with Tap-to-Zoom Cue */
     .image-viewer { 
       width: 500px; 
       height: 500px; 
@@ -122,8 +113,7 @@
       position: relative; 
       cursor: zoom-in;
     }
-    .image-viewer img { width: 100%; height: 100%; object-fit: contain; transition: opacity 0.2s ease-in-out; }
-    
+    .image-viewer img { width: 100%; height: 100%; object-fit: contain; }
     .zoom-hint {
       position: absolute; bottom: 10px; right: 10px;
       background: rgba(9, 14, 26, 0.75); color: #fff;
@@ -131,72 +121,39 @@
       pointer-events: none; backdrop-filter: blur(4px);
       border: 1px solid var(--border); opacity: 0.85;
     }
-
     .img-loader { position: absolute; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; color: #0284c7; font-size: 0.85rem; font-weight: 700; background: #ffffff; width: 100%; height: 100%; z-index: 5; }
     .spinner { width: 40px; height: 40px; border: 4px solid #e2e8f0; border-top-color: #0284c7; border-radius: 50%; animation: spin 0.8s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
     .img-fallback { color: #64748b; font-size: 0.85rem; text-align: center; display: none; padding: 20px; z-index: 6; }
 
-    /* Details Panel */
-    .design-details { flex: 1; display: flex; flex-direction: column; gap: 10px; min-width: 0; width: 100%; }
-    .design-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
-    .design-title-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-    .design-badge { font-size: 1.45rem; font-weight: 800; color: var(--primary); font-family: monospace; letter-spacing: 0.5px; }
-    
-    .focused-sku-chip {
-      background: #0284c7; color: #fff; padding: 3px 8px; border-radius: 4px;
-      font-size: 0.72rem; font-family: monospace; font-weight: 700; display: none;
-    }
-    .reset-focus-btn {
-      background: #1e293b; color: var(--primary); border: 1px solid var(--border);
-      padding: 3px 7px; border-radius: 4px; font-size: 0.68rem; font-weight: 600;
-      cursor: pointer; display: none;
-    }
-    .reset-focus-btn:hover { background: #334155; }
-
-    .ag-tag { font-size: 0.75rem; color: #cbd5e1; word-break: break-all; margin-top: 3px; line-height: 1.35; }
-    .ag-tag b { color: var(--primary); }
-    
+    .variant-details { flex: 1; display: flex; flex-direction: column; gap: 10px; min-width: 0; width: 100%; }
+    .sku-badge { font-size: 1.35rem; font-weight: 800; color: var(--primary); font-family: monospace; }
+    .ag-tag { font-size: 0.75rem; color: var(--text-muted); word-break: break-all; margin-top: 2px; }
     .pill-selected { background: #065f46; color: #34d399; border: 1px solid #059669; padding: 4px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: 700; }
-    .pill-partial { background: #854d0e; color: #fde047; border: 1px solid #a16207; padding: 4px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: 700; }
 
     .metric-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
     .metric-box { background: #090e1a; padding: 7px 9px; border-radius: 6px; border: 1px solid var(--border); }
     .metric-lbl { font-size: 0.62rem; color: var(--text-muted); text-transform: uppercase; }
     .metric-val { font-size: 0.9rem; font-weight: 700; color: #fff; margin-top: 2px; }
 
-    .section-title { font-size: 0.7rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 5px; }
+    .section-title { font-size: 0.7rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 5px; display: flex; justify-content: space-between; align-items: center; }
+    .chip-container { display: flex; gap: 6px; flex-wrap: wrap; max-height: 85px; overflow-y: auto; padding: 2px; }
+    .chip { padding: 4px 8px; border-radius: 5px; background: #090e1a; border: 1px solid var(--border); font-size: 0.72rem; font-weight: 600; cursor: pointer; }
+    .chip:hover { border-color: var(--primary); }
+    .chip.active { background: #0284c7; border-color: var(--primary); color: #fff; }
 
-    /* Variants Tray */
-    .detailed-tray { background: #0b1324; border: 1px solid var(--border); border-radius: 8px; padding: 10px; flex: 1; display: flex; flex-direction: column; }
+    .detailed-tray { background: #0b1324; border: 1px solid var(--border); border-radius: 8px; padding: 10px; }
     .tray-table { width: 100%; border-collapse: collapse; font-size: 0.75rem; text-align: left; }
     .tray-table th { color: var(--text-muted); padding: 5px 6px; border-bottom: 1px solid var(--border); font-size: 0.68rem; }
-    .tray-table td { padding: 6px 6px; border-bottom: 1px solid #1a2538; vertical-align: middle; }
-    
-    .variant-row { cursor: pointer; transition: background 0.15s; }
-    .variant-row:hover { background: #131f37; }
-    .variant-row.focused-row { background: #172554 !important; border-left: 3px solid var(--primary); }
-    .variant-row.selected-row { background: rgba(56, 189, 248, 0.08); }
-    .variant-row.selected-row.focused-row { background: #1e3a8a !important; }
+    .tray-table td { padding: 5px 6px; border-bottom: 1px solid #1a2538; }
 
     /* Sticky Bottom Bar */
     .actions-bar { 
-      position: sticky; 
-      bottom: 0; 
-      left: 0; 
-      width: 100%; 
-      max-width: 1250px; 
-      background: rgba(15, 23, 42, 0.95); 
-      backdrop-filter: blur(8px); 
-      border: 1px solid var(--border); 
-      border-radius: 10px; 
-      padding: 10px 14px; 
-      display: flex; 
-      justify-content: space-between; 
-      align-items: center; 
-      margin-top: 10px; 
-      box-shadow: 0 -8px 25px rgba(0,0,0,0.5); 
-      z-index: 500; 
+      position: sticky; bottom: 0; left: 0; width: 100%; max-width: 1250px; 
+      background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(8px); 
+      border: 1px solid var(--border); border-radius: 10px; 
+      padding: 10px 14px; display: flex; justify-content: space-between; 
+      align-items: center; margin-top: 10px; box-shadow: 0 -8px 25px rgba(0,0,0,0.5); z-index: 500; 
     }
     .btn-nav { background: #22324e; color: #fff; border: none; padding: 10px 18px; border-radius: 6px; cursor: pointer; font-weight: 700; font-size: 0.85rem; }
     .btn-nav:disabled { opacity: 0.3; cursor: not-allowed; }
@@ -204,124 +161,56 @@
     .btn-action { padding: 10px 18px; border-radius: 6px; font-size: 0.85rem; font-weight: 700; cursor: pointer; border: none; }
     .btn-confirm { background: #16a34a; color: white; }
     .btn-confirmed { background: #dc2626; color: white; }
+    .export-btn { background: #2563eb; color: #fff; border: none; padding: 7px 12px; border-radius: 6px; cursor: pointer; font-weight: 700; font-size: 0.78rem; }
 
-    /* Dual Export Dropdown */
-    .export-container { position: relative; display: inline-block; }
-    .export-btn { background: #2563eb; color: #fff; border: none; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-weight: 700; font-size: 0.78rem; display: flex; align-items: center; gap: 4px; }
-    .export-btn:hover { background: #1d4ed8; }
-    .export-menu { display: none; position: absolute; right: 0; top: calc(100% + 4px); background: #0b1324; border: 1px solid var(--border); border-radius: 6px; box-shadow: 0 10px 25px rgba(0,0,0,0.8); z-index: 1000; min-width: 220px; flex-direction: column; overflow: hidden; }
-    .export-menu.show { display: flex; }
-    .export-option { padding: 10px 14px; font-size: 0.78rem; color: #f1f5f9; cursor: pointer; border-bottom: 1px solid #1e293b; display: flex; flex-direction: column; gap: 2px; }
-    .export-option:hover { background: #1e293b; }
-    .export-option:last-child { border-bottom: none; }
-    .export-option small { font-size: 0.68rem; color: var(--text-muted); }
-
-    /* Floating Lightbox Viewer */
+    /* Lightbox Modal */
     .lightbox-modal {
-      display: none;
-      position: fixed;
-      top: 0; left: 0; width: 100vw; height: 100vh;
-      background: rgba(4, 7, 15, 0.94);
-      backdrop-filter: blur(12px);
-      z-index: 10000;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 16px;
-      user-select: none;
+      display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+      background: rgba(4, 7, 15, 0.94); backdrop-filter: blur(12px);
+      z-index: 10000; flex-direction: column; align-items: center; justify-content: center; padding: 16px; user-select: none;
     }
     .lightbox-modal.active { display: flex; }
-
-    .lightbox-header {
-      width: 100%;
-      max-width: 900px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 10px;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-    .lightbox-meta {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      color: #fff;
-      flex-wrap: wrap;
-    }
-    .lightbox-badge {
-      font-size: 1.3rem;
-      font-weight: 800;
-      color: var(--primary);
-      font-family: monospace;
-    }
-    .lightbox-tag {
-      font-size: 0.8rem;
-      color: var(--text-muted);
-      background: #131c2e;
-      padding: 4px 8px;
-      border-radius: 4px;
-      border: 1px solid var(--border);
-    }
-    .lightbox-tag-wt {
-      font-size: 0.82rem;
-      font-weight: 700;
-      color: #38bdf8;
-      background: #0c213d;
-      border-color: #0284c7;
-    }
-    .lightbox-close-btn {
-      background: #1e293b;
-      color: #fff;
-      border: 1px solid var(--border);
-      width: 38px;
-      height: 38px;
-      border-radius: 50%;
-      font-size: 1.2rem;
-      font-weight: 700;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: background 0.15s;
-    }
+    .lightbox-header { width: 100%; max-width: 900px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; gap: 10px; flex-wrap: wrap; }
+    .lightbox-meta { display: flex; align-items: center; gap: 8px; color: #fff; flex-wrap: wrap; }
+    .lightbox-badge { font-size: 1.3rem; font-weight: 800; color: var(--primary); font-family: monospace; }
+    .lightbox-tag { font-size: 0.8rem; color: var(--text-muted); background: #131c2e; padding: 4px 8px; border-radius: 4px; border: 1px solid var(--border); }
+    .lightbox-tag-wt { font-size: 0.82rem; font-weight: 700; color: #38bdf8; background: #0c213d; border-color: #0284c7; }
+    .lightbox-close-btn { background: #1e293b; color: #fff; border: 1px solid var(--border); width: 38px; height: 38px; border-radius: 50%; font-size: 1.2rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; }
     .lightbox-close-btn:hover { background: #dc2626; border-color: #dc2626; }
+    .lightbox-body { width: 100%; max-width: 900px; height: calc(100vh - 160px); max-height: 800px; background: #ffffff; border-radius: 14px; overflow: hidden; display: flex; align-items: center; justify-content: center; position: relative; border: 2px solid var(--border); }
+    .lightbox-body img { width: 100%; height: 100%; object-fit: contain; }
+    .lightbox-actions-bar { margin-top: 12px; width: 100%; max-width: 900px; display: flex; justify-content: space-between; align-items: center; background: rgba(15, 23, 42, 0.95); border: 1px solid var(--border); border-radius: 10px; padding: 10px 16px; backdrop-filter: blur(8px); }
 
-    .lightbox-body {
-      width: 100%;
-      max-width: 900px;
-      height: calc(100vh - 160px);
-      max-height: 800px;
-      background: #ffffff;
-      border-radius: 14px;
-      overflow: hidden;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      position: relative;
-      border: 2px solid var(--border);
-      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+    /* New Export Options Modal */
+    #exportModal {
+      display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+      background: rgba(4, 7, 15, 0.85); backdrop-filter: blur(8px);
+      z-index: 20000; align-items: center; justify-content: center;
     }
-    .lightbox-body img {
-      width: 100%;
-      height: 100%;
-      object-fit: contain;
-      transition: opacity 0.15s;
+    #exportModal.active { display: flex; }
+    .export-card {
+      background: #131c2e; border: 1px solid var(--border); border-radius: 12px;
+      padding: 22px; width: 90%; max-width: 480px; box-shadow: 0 20px 40px rgba(0,0,0,0.8);
     }
-
-    .lightbox-actions-bar {
-      margin-top: 12px;
-      width: 100%;
-      max-width: 900px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      background: rgba(15, 23, 42, 0.95);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 10px 16px;
-      backdrop-filter: blur(8px);
+    .export-card h3 { margin: 0 0 6px 0; color: var(--primary); font-size: 1.15rem; }
+    .export-card p { font-size: 0.8rem; color: var(--text-muted); margin: 0 0 16px 0; }
+    .export-options-grid { display: flex; flex-direction: column; gap: 12px; margin-bottom: 18px; }
+    .export-type-btn {
+      display: flex; align-items: center; justify-content: space-between;
+      background: #090e1a; border: 1px solid var(--border); color: #fff;
+      padding: 12px 14px; border-radius: 8px; cursor: pointer; text-align: left;
     }
+    .export-type-btn:hover { border-color: var(--primary); }
+    .pdf-field-selector {
+      background: #090e1a; border: 1px solid var(--border); border-radius: 8px;
+      padding: 12px; display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px;
+    }
+    .pdf-field-title { font-size: 0.72rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 4px; }
+    .pdf-fields-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .pdf-chk-label { font-size: 0.76rem; color: #cbd5e1; display: flex; align-items: center; gap: 6px; cursor: pointer; }
+    .export-modal-footer { display: flex; justify-content: flex-end; gap: 10px; }
+    .btn-secondary { background: #334155; color: #fff; border: none; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; font-weight: 600; }
+    .btn-primary-action { background: #0284c7; color: #fff; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; font-weight: 700; }
 
     @media (max-width: 980px) {
       body { padding: 10px 10px 80px 10px; }
@@ -331,82 +220,59 @@
       .filter-grid { grid-template-columns: repeat(2, 1fr); }
       .filter-box-wide { grid-column: span 2; min-width: 100%; }
       .dropdown-menu-wide { min-width: 90vw; max-width: 90vw; }
+      .chip-container { max-height: 120px; }
+      .chip { padding: 6px 10px; font-size: 0.78rem; }
       .btn-nav, .btn-action { padding: 10px 14px; font-size: 0.82rem; }
-
       .lightbox-body { height: calc(100vh - 200px); }
-      .lightbox-actions-bar { padding: 8px 12px; }
-      .lightbox-header { margin-bottom: 6px; }
-      .lightbox-badge { font-size: 1.1rem; }
-      .lightbox-tag { font-size: 0.72rem; padding: 2px 6px; }
     }
   </style>
 </head>
 <body>
 
-  <!-- Password Authentication Overlay -->
+  <!-- Password Authentication -->
   <div id="authOverlay">
     <div class="auth-card">
-      <h3>Secured Catalogue Access</h3>
-      <p>Enter the store PIN to decrypt catalogue records.</p>
+      <h3>South1 Secured Access</h3>
+      <p>Enter the store PIN to decrypt weekly stock data.</p>
       <input type="password" id="passInput" class="auth-input" placeholder="Password" onkeydown="if(event.key==='Enter') decryptAndLoad()">
-      <button class="auth-btn" id="unlockBtn" onclick="decryptAndLoad()">Unlock Catalogue</button>
+      <button class="auth-btn" id="unlockBtn" onclick="decryptAndLoad()">Unlock Catalog</button>
       <div id="authLoading" class="auth-loading">⏳ Fetching encrypted dataset...</div>
       <div id="authErr" class="auth-err">Incorrect PIN. Access Denied.</div>
     </div>
   </div>
 
   <div class="header">
-    <h2>Tanishq Available Designs</h2>
-    <div style="display: flex; gap: 8px; align-items: center;">
-      <!-- Dual Export Menu Button -->
-      <div class="export-container">
-        <button class="export-btn" onclick="toggleExportMenu(event)">
-          📥 Download Selected (<span id="exportCount">0</span>) ▾
-        </button>
-        <div class="export-menu" id="exportMenu">
-          <div class="export-option" onclick="exportSelectedSkus()">
-            <b>Download Selected SKUs (.xlsx)</b>
-            <small>Exports exact variants checked</small>
-          </div>
-          <div class="export-option" onclick="exportSelectedDesigns()">
-            <b>Download Unique Designs (.xlsx)</b>
-            <small>Summary catalog of selected designs</small>
-          </div>
-        </div>
-      </div>
-    </div>
+    <h2>South1 Catalogue</h2>
+    <button class="export-btn" onclick="openExportModal()">📥 Download Selected (<span id="exportCount">0</span>)</button>
   </div>
 
   <div class="control-panel">
     <div class="filter-grid">
-      <!-- Universal Live Search across SKU, Design, AG, Category, Group -->
       <div class="filter-box">
-        <span class="filter-label">Search (SKU, Design, AG, etc.)</span>
-        <input type="text" class="search-input" id="skuSearchInput" placeholder="e.g. 500005, Studded, Ring..." oninput="handleUniversalSearch()">
+        <span class="filter-label">Search (SKU, AG, Store, etc.)</span>
+        <input type="text" class="search-input" id="skuSearchInput" placeholder="Search..." oninput="handleUniversalSearch()">
       </div>
 
-      <!-- AG Group Filter -->
-      <div class="filter-box filter-box-wide" id="fb-ag">
-        <span class="filter-label">AG Group</span>
-        <button class="dropdown-btn" onclick="toggleDropdown('ag')">All AG Groups</button>
-        <div class="dropdown-menu dropdown-menu-wide" id="menu-ag">
+      <div class="filter-box" id="fb-store">
+        <span class="filter-label">Store Code</span>
+        <button class="dropdown-btn" onclick="toggleDropdown('store')">All Stores</button>
+        <div class="dropdown-menu" id="menu-store">
           <div class="dropdown-toolbar">
-            <div class="select-all-row" onclick="toggleSelectAllDropdown('ag')">
+            <div class="select-all-row" onclick="toggleSelectAllDropdown('store')">
               <span class="select-all-label">
-                <input type="checkbox" id="chk-all-ag" onclick="event.stopPropagation(); toggleSelectAllDropdown('ag')">
+                <input type="checkbox" id="chk-all-store" onclick="event.stopPropagation(); toggleSelectAllDropdown('store')">
                 <span>Select All</span>
               </span>
-              <small id="lbl-all-ag" style="color:var(--text-muted);">0 / 0</small>
+              <small id="lbl-all-store" style="color:var(--text-muted);">0 / 0</small>
             </div>
-            <input type="text" class="dropdown-search" placeholder="Type to filter AG groups..." oninput="filterChecklist('ag', this.value)">
+            <input type="text" class="dropdown-search" placeholder="Search..." oninput="filterChecklist('store', this.value)">
           </div>
-          <div class="dropdown-list" id="list-ag"></div>
+          <div class="dropdown-list" id="list-store"></div>
         </div>
       </div>
 
-      <!-- Category Filter -->
       <div class="filter-box" id="fb-cat">
-        <span class="filter-label">Product Category</span>
+        <span class="filter-label">Product Cat</span>
         <button class="dropdown-btn" onclick="toggleDropdown('cat')">All Categories</button>
         <div class="dropdown-menu" id="menu-cat">
           <div class="dropdown-toolbar">
@@ -417,32 +283,66 @@
               </span>
               <small id="lbl-all-cat" style="color:var(--text-muted);">0 / 0</small>
             </div>
-            <input type="text" class="dropdown-search" placeholder="Search category..." oninput="filterChecklist('cat', this.value)">
+            <input type="text" class="dropdown-search" placeholder="Search..." oninput="filterChecklist('cat', this.value)">
           </div>
           <div class="dropdown-list" id="list-cat"></div>
         </div>
       </div>
 
-      <!-- Group Filter -->
-      <div class="filter-box" id="fb-group">
-        <span class="filter-label">Group</span>
-        <button class="dropdown-btn" onclick="toggleDropdown('group')">All Groups</button>
-        <div class="dropdown-menu" id="menu-group">
+      <div class="filter-box" id="fb-cluster">
+        <span class="filter-label">Cluster</span>
+        <button class="dropdown-btn" onclick="toggleDropdown('cluster')">All Clusters</button>
+        <div class="dropdown-menu" id="menu-cluster">
           <div class="dropdown-toolbar">
-            <div class="select-all-row" onclick="toggleSelectAllDropdown('group')">
+            <div class="select-all-row" onclick="toggleSelectAllDropdown('cluster')">
               <span class="select-all-label">
-                <input type="checkbox" id="chk-all-group" onclick="event.stopPropagation(); toggleSelectAllDropdown('group')">
+                <input type="checkbox" id="chk-all-cluster" onclick="event.stopPropagation(); toggleSelectAllDropdown('cluster')">
                 <span>Select All</span>
               </span>
-              <small id="lbl-all-group" style="color:var(--text-muted);">0 / 0</small>
+              <small id="lbl-all-cluster" style="color:var(--text-muted);">0 / 0</small>
             </div>
-            <input type="text" class="dropdown-search" placeholder="Search group..." oninput="filterChecklist('group', this.value)">
+            <input type="text" class="dropdown-search" placeholder="Search..." oninput="filterChecklist('cluster', this.value)">
           </div>
-          <div class="dropdown-list" id="list-group"></div>
+          <div class="dropdown-list" id="list-cluster"></div>
+        </div>
+      </div>
+      
+      <div class="filter-box filter-box-wide" id="fb-ag">
+        <span class="filter-label">AG Group</span>
+        <button class="dropdown-btn" onclick="toggleDropdown('ag')">All AGs</button>
+        <div class="dropdown-menu dropdown-menu-wide" id="menu-ag">
+          <div class="dropdown-toolbar">
+            <div class="select-all-row" onclick="toggleSelectAllDropdown('ag')">
+              <span class="select-all-label">
+                <input type="checkbox" id="chk-all-ag" onclick="event.stopPropagation(); toggleSelectAllDropdown('ag')">
+                <span>Select All</span>
+              </span>
+              <small id="lbl-all-ag" style="color:var(--text-muted);">0 / 0</small>
+            </div>
+            <input type="text" class="dropdown-search" placeholder="Search AG..." oninput="filterChecklist('ag', this.value)">
+          </div>
+          <div class="dropdown-list" id="list-ag"></div>
+        </div>
+      </div>
+      
+      <div class="filter-box" id="fb-size">
+        <span class="filter-label">Size</span>
+        <button class="dropdown-btn" onclick="toggleDropdown('size')">All Sizes</button>
+        <div class="dropdown-menu" id="menu-size">
+          <div class="dropdown-toolbar">
+            <div class="select-all-row" onclick="toggleSelectAllDropdown('size')">
+              <span class="select-all-label">
+                <input type="checkbox" id="chk-all-size" onclick="event.stopPropagation(); toggleSelectAllDropdown('size')">
+                <span>Select All</span>
+              </span>
+              <small id="lbl-all-size" style="color:var(--text-muted);">0 / 0</small>
+            </div>
+            <input type="text" class="dropdown-search" placeholder="Search size..." oninput="filterChecklist('size', this.value)">
+          </div>
+          <div class="dropdown-list" id="list-size"></div>
         </div>
       </div>
 
-      <!-- Karat Filter -->
       <div class="filter-box" id="fb-karat">
         <span class="filter-label">Karat</span>
         <button class="dropdown-btn" onclick="toggleDropdown('karat')">All Karats</button>
@@ -461,7 +361,6 @@
         </div>
       </div>
 
-      <!-- Prolif Filter -->
       <div class="filter-box" id="fb-prolif">
         <span class="filter-label">Prolif</span>
         <button class="dropdown-btn" onclick="toggleDropdown('prolif')">All Prolifs</button>
@@ -479,28 +378,8 @@
           <div class="dropdown-list" id="list-prolif"></div>
         </div>
       </div>
-
-      <!-- Size Filter -->
-      <div class="filter-box" id="fb-size">
-        <span class="filter-label">Size</span>
-        <button class="dropdown-btn" onclick="toggleDropdown('size')">All Sizes</button>
-        <div class="dropdown-menu" id="menu-size">
-          <div class="dropdown-toolbar">
-            <div class="select-all-row" onclick="toggleSelectAllDropdown('size')">
-              <span class="select-all-label">
-                <input type="checkbox" id="chk-all-size" onclick="event.stopPropagation(); toggleSelectAllDropdown('size')">
-                <span>Select All</span>
-              </span>
-              <small id="lbl-all-size" style="color:var(--text-muted);">0 / 0</small>
-            </div>
-            <input type="text" class="dropdown-search" placeholder="Search size..." oninput="filterChecklist('size', this.value)">
-          </div>
-          <div class="dropdown-list" id="list-size"></div>
-        </div>
-      </div>
     </div>
 
-    <!-- Weight Condition Row -->
     <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 4px; padding-top: 6px; border-top: 1px solid var(--border);">
       <span class="filter-label">Weight (WT):</span>
       <div class="weight-row">
@@ -522,93 +401,64 @@
   </div>
 
   <div class="stats-bar">
-    <div>Filtered Designs: <b id="statDesignCount">0</b> <span id="statRowCount" style="color:var(--text-muted); font-size:0.75rem;">(SKUs: 0)</span></div>
+    <div>Filtered Unique Variants: <b id="statVariantCount">0</b> <span id="statTotalUnits" style="color:var(--text-muted); font-size:0.78rem;"></span></div>
     <div>Viewing: <b id="statCurIdx">0</b> of <span id="statMaxIdx">0</span></div>
-    <div>Selected: <b id="statSelectedCount">0 SKUs</b> across <span id="statSelectedDesigns">0 designs</span></div>
+    <div>Selected: <b id="statSelectedCount">0</b></div>
   </div>
 
   <div class="main-card">
-    <div id="emptyMsg" style="padding: 80px; text-align: center; color: var(--text-muted);">
-      Loading encrypted catalogue...
-    </div>
+    <div class="card-top">
+      <div class="image-viewer" onclick="openLightbox()" title="Click to enlarge image">
+        <div class="img-loader" id="imgLoader"><div class="spinner"></div><span>Loading image...</span></div>
+        <img id="itemImg" src="" alt="Variant Preview" onload="handleImageSuccess()" onerror="handleImageError()">
+        <div id="imgFallback" class="img-fallback">Image not found on catalog server</div>
+        <div class="zoom-hint">🔍 Tap to Zoom</div>
+      </div>
 
-    <div id="cardBody" style="display: none; flex-direction: column; gap: 14px;">
-      <div class="card-top">
-        <div class="image-viewer" onclick="openLightbox()" title="Click to enlarge image">
-          <div class="img-loader" id="imgLoader"><div class="spinner"></div><span>Loading image...</span></div>
-          <img id="itemImg" src="" alt="Design Preview" onload="handleImageSuccess()" onerror="handleImageError()">
-          <div id="imgFallback" class="img-fallback"></div>
-          <div class="zoom-hint">🔍 Tap to Zoom</div>
+      <div class="variant-details">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+          <div><div class="sku-badge" id="dispVariant">---</div><div class="ag-tag" id="dispAG">---</div></div>
+          <div><span id="dispSelectedBadge" class="pill-selected" style="display:none;">CONFIRMED</span></div>
         </div>
 
-        <div class="design-details">
-          <div class="design-header">
-            <div>
-              <div class="design-title-row">
-                <span class="design-badge" id="dispDesign">---</span>
-                <span class="focused-sku-chip" id="dispFocusedChip">SKU: ---</span>
-                <button class="reset-focus-btn" id="resetFocusBtn" onclick="resetVariantFocus()">View All Details ✕</button>
-              </div>
-              <div class="ag-tag" id="dispAG">---</div>
-            </div>
-            <div>
-              <span id="dispSelectedBadge" class="pill-selected" style="display:none;">ALL SELECTED</span>
-              <span id="dispPartialBadge" class="pill-partial" style="display:none;">PARTIALLY SELECTED</span>
-            </div>
-          </div>
+        <div class="metric-grid">
+          <div class="metric-box"><div class="metric-lbl">Product Cat</div><div class="metric-val" id="dispCat">-</div></div>
+          <div class="metric-box"><div class="metric-lbl">Cluster</div><div class="metric-val" id="dispCluster">-</div></div>
+          <div class="metric-box"><div class="metric-lbl">Karat / Prolif</div><div class="metric-val" id="dispKaratProlif">-</div></div>
+          <div class="metric-box"><div class="metric-lbl">Total Stock</div><div class="metric-val" id="dispTotalQty">0 pcs</div></div>
+        </div>
 
-          <div class="metric-grid">
-            <div class="metric-box"><div class="metric-lbl">Product Cat</div><div class="metric-val" id="dispCat">-</div></div>
-            <div class="metric-box"><div class="metric-lbl">Group</div><div class="metric-val" id="dispGroup">-</div></div>
-            <div class="metric-box"><div class="metric-lbl">Karat / Prolif</div><div class="metric-val" id="dispKaratProlif">-</div></div>
-            <div class="metric-box"><div class="metric-lbl" id="dispSkuCountLabel">Variant SKUs</div><div class="metric-val" id="dispSkuCount">0 SKUs</div></div>
-          </div>
+        <div style="background: #090e1a; padding: 8px 10px; border-radius: 6px; border: 1px solid var(--border);">
+          <div class="section-title"><span>Available Stores (<span id="dispStoreCount">0</span>)</span><span style="color:var(--primary); font-size:0.65rem;">Tap chip to filter</span></div>
+          <div class="chip-container" id="dispStoreChips"></div>
+        </div>
 
-          <div style="flex: 1; display: flex; gap: 8px;">
-            <div style="flex: 1; background: #090e1a; padding: 7px 9px; border-radius: 6px; border: 1px solid var(--border);">
-              <div class="section-title" id="dispSizesLabel">Available Sizes</div>
-              <div id="dispSizesText" style="font-weight: 700; color: #fff; font-size: 0.8rem;">-</div>
-            </div>
-            <div style="flex: 1; background: #090e1a; padding: 7px 9px; border-radius: 6px; border: 1px solid var(--border);">
-              <div class="section-title" id="dispWtLabel">Weight Range (WT)</div>
-              <div id="dispWtRangeText" style="font-weight: 700; color: #fff; font-size: 0.8rem;">-</div>
-            </div>
-          </div>
+        <div style="display:flex; gap:8px;">
+          <div style="flex:1; background:#090e1a; padding:7px 9px; border-radius:6px; border:1px solid var(--border);"><div class="section-title">Available Sizes</div><div id="dispSizesText" style="font-weight:700; color:#fff; font-size:0.8rem;">-</div></div>
+          <div style="flex:1; background:#090e1a; padding:7px 9px; border-radius:6px; border:1px solid var(--border);"><div class="section-title">Weight Range (WT)</div><div id="dispWtRangeText" style="font-weight:700; color:#fff; font-size:0.8rem;">-</div></div>
+        </div>
 
-          <div class="detailed-tray">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-              <div style="font-size: 0.75rem; font-weight: 700; color: var(--primary);" id="trayHeader">Associated SKUs / Variants</div>
-              <span style="font-size: 0.7rem; color: var(--text-muted);">Tap row to view variant AG & details</span>
-            </div>
-            <div id="trayTableWrapper" style="max-height: 200px; overflow-y: auto;">
-              <table class="tray-table">
-                <thead>
-                  <tr>
-                    <th style="width: 32px; text-align: center;">Sel</th>
-                    <th>SKU Code</th>
-                    <th>Size</th>
-                    <th>WT (g)</th>
-                    <th>Karat</th>
-                    <th>Prolif</th>
-                    <th>AG Group Preview</th>
-                  </tr>
-                </thead>
-                <tbody id="trayTbody"></tbody>
-              </table>
-            </div>
+        <div class="detailed-tray">
+          <div style="font-size:0.75rem; font-weight:700; color:var(--primary); margin-bottom:6px;" id="trayHeader">Available Lots & Weights</div>
+          <div style="max-height: 155px; overflow-y: auto;">
+            <table class="tray-table">
+              <thead><tr><th>Store</th><th>Lot No</th><th>Qty</th><th>WT (g)</th><th>Size</th><th>Value (₹)</th></tr></thead>
+              <tbody id="trayTbody"></tbody>
+            </table>
           </div>
         </div>
       </div>
     </div>
   </div>
 
-  <div class="actions-bar" id="actionsBar" style="display: none;">
-    <button class="btn-nav" id="prevBtn" onclick="navigateDesign(-1)">← Prev</button>
+  <!-- Sticky Bottom Bar -->
+  <div class="actions-bar">
+    <button class="btn-nav" id="prevBtn" onclick="navigateVariant(-1)">← Prev</button>
     <div class="btn-decision">
-      <button class="btn-action" style="background:#334155; color:#fff;" onclick="navigateDesign(1)">Skip</button>
-      <button class="btn-action btn-confirm" id="confirmBtn" onclick="toggleSelectAllCurrentDesign()">✔ Select All SKUs for Design</button>
+      <button class="btn-action" style="background:#334155; color:#fff;" onclick="navigateVariant(1)">Skip</button>
+      <button class="btn-action btn-confirm" id="confirmBtn" onclick="toggleConfirmCurrent()">✔ Confirm</button>
     </div>
-    <button class="btn-nav" id="nextBtn" onclick="navigateDesign(1)">Next →</button>
+    <button class="btn-nav" id="nextBtn" onclick="navigateVariant(1)">Next →</button>
   </div>
 
   <!-- Floating Lightbox Overlay -->
@@ -625,22 +475,787 @@
 
     <div class="lightbox-body" id="lightboxBody">
       <div class="img-loader" id="modalImgLoader"><div class="spinner"></div><span>Loading full-size preview...</span></div>
-      <img id="modalImg" src="" alt="Enlarged Design View" onload="handleModalImgSuccess()" onerror="handleModalImgError()">
+      <img id="modalImg" src="" alt="Enlarged Variant Preview" onload="handleModalImgSuccess()" onerror="handleModalImgError()">
       <div id="modalFallback" class="img-fallback"></div>
     </div>
 
     <div class="lightbox-actions-bar">
-      <button class="btn-nav" id="modalPrevBtn" onclick="navigateDesign(-1)">← Prev</button>
+      <button class="btn-nav" id="modalPrevBtn" onclick="navigateVariant(-1)">← Prev</button>
       <div class="btn-decision">
-        <button class="btn-action" style="background:#334155; color:#fff;" onclick="navigateDesign(1)">Skip</button>
-        <button class="btn-action btn-confirm" id="modalConfirmBtn" onclick="toggleSelectAllCurrentDesign()">✔ Confirm Selection</button>
+        <button class="btn-action" style="background:#334155; color:#fff;" onclick="navigateVariant(1)">Skip</button>
+        <button class="btn-action btn-confirm" id="modalConfirmBtn" onclick="toggleConfirmCurrent()">✔ Confirm Selection</button>
       </div>
-      <button class="btn-nav" id="modalNextBtn" onclick="navigateDesign(1)">Next →</button>
+      <button class="btn-nav" id="modalNextBtn" onclick="navigateVariant(1)">Next →</button>
+    </div>
+  </div>
+
+  <!-- Download/Export Choice Modal -->
+  <div id="exportModal">
+    <div class="export-card">
+      <h3>Select Export Format</h3>
+      <p>Choose whether to generate an Excel worksheet or a structured visual PDF catalog.</p>
+      
+      <div class="export-options-grid">
+        <div class="export-type-btn" onclick="exportSelectedExcel()">
+          <div>
+            <b style="color:var(--primary);">📊 Download Excel (.xlsx)</b>
+            <div style="font-size:0.75rem; color:var(--text-muted); margin-top:2px;">Original detailed data spreadsheet</div>
+          </div>
+          <span>➔</span>
+        </div>
+      </div>
+
+      <div class="pdf-field-selector">
+        <div class="pdf-field-title">Visual PDF Card Attributes to Include:</div>
+        <div class="pdf-fields-grid">
+          <label class="pdf-chk-label"><input type="checkbox" id="pdfChkVariant" checked> SKU / Variant</label>
+          <label class="pdf-chk-label"><input type="checkbox" id="pdfChkWt" checked> Weight Range (WT)</label>
+          <label class="pdf-chk-label"><input type="checkbox" id="pdfChkCat" checked> Product Category</label>
+          <label class="pdf-chk-label"><input type="checkbox" id="pdfChkAg" checked> AG Group</label>
+          <label class="pdf-chk-label"><input type="checkbox" id="pdfChkSize"> Size(s)</label>
+          <label class="pdf-chk-label"><input type="checkbox" id="pdfChkKarat"> Karat &amp; Prolif</label>
+        </div>
+      </div>
+
+      <div class="export-modal-footer">
+        <button class="btn-secondary" onclick="closeExportModal()">Cancel</button>
+        <button class="btn-primary-action" id="pdfExportActionBtn" onclick="exportSelectedPDF()">📄 Generate Visual PDF</button>
+      </div>
     </div>
   </div>
 
   <script>
-    const _0x149d23=_0x3573;(function(_0x43dd20,_0x17b9c0){const _0x2f7ba9=_0x3573,_0x49b14f=_0x43dd20();while(!![]){try{const _0x350de0=parseInt(_0x2f7ba9(0x1bb))/0x1*(-parseInt(_0x2f7ba9(0x229))/0x2)+-parseInt(_0x2f7ba9(0x235))/0x3*(parseInt(_0x2f7ba9(0x280))/0x4)+parseInt(_0x2f7ba9(0x28c))/0x5+-parseInt(_0x2f7ba9(0x1de))/0x6+-parseInt(_0x2f7ba9(0x23f))/0x7+parseInt(_0x2f7ba9(0x1f0))/0x8+parseInt(_0x2f7ba9(0x271))/0x9;if(_0x350de0===_0x17b9c0)break;else _0x49b14f['push'](_0x49b14f['shift']());}catch(_0x1a5039){_0x49b14f['push'](_0x49b14f['shift']());}}}(_0x3fd8,0xe507a),(function(){const _0x111065=_0x3573,_0x3e1d42=_0x111065(0x202),_0x221cae=window[_0x111065(0x21c)]['hostname']===_0x111065(0x270)||window[_0x111065(0x21c)][_0x111065(0x2a2)]===_0x111065(0x26e)||window[_0x111065(0x21c)][_0x111065(0x231)]===_0x111065(0x203);if(window[_0x111065(0x21c)][_0x111065(0x2a2)]!==_0x3e1d42&&!_0x221cae){document[_0x111065(0x223)][_0x111065(0x281)]=_0x111065(0x272);throw new Error(_0x111065(0x246));}}()));let rawData=[],filteredGroups=[],selectedSkusMap=new Map(),currentIdx=0x0,focusedSku=null,isLightboxOpen=![],encryptedData='',dataFetchPromise=null;const filterFields={'ag':{'col':'AG','selected':new Set()},'cat':{'col':_0x149d23(0x228),'selected':new Set()},'group':{'col':_0x149d23(0x233),'selected':new Set()},'karat':{'col':_0x149d23(0x1f4),'selected':new Set()},'prolif':{'col':'Prolif','selected':new Set()},'size':{'col':_0x149d23(0x208),'selected':new Set()}};window[_0x149d23(0x227)](_0x149d23(0x1bd),_0x1b7d3f=>{const _0x3dad0f=_0x149d23;!_0x1b7d3f[_0x3dad0f(0x275)][_0x3dad0f(0x24c)](_0x3dad0f(0x23d))&&document['querySelectorAll'](_0x3dad0f(0x247))[_0x3dad0f(0x1dd)](_0x5bac1b=>_0x5bac1b[_0x3dad0f(0x22d)]['remove'](_0x3dad0f(0x245))),!_0x1b7d3f['target'][_0x3dad0f(0x24c)](_0x3dad0f(0x273))&&document[_0x3dad0f(0x24b)](_0x3dad0f(0x2b5))['classList'][_0x3dad0f(0x1bc)](_0x3dad0f(0x245));});function toggleExportMenu(_0x41e467){const _0x4a3424=_0x149d23;_0x41e467[_0x4a3424(0x2a5)](),document[_0x4a3424(0x24b)](_0x4a3424(0x2b5))[_0x4a3424(0x22d)][_0x4a3424(0x212)](_0x4a3424(0x245));}function toggleDropdown(_0x10864e){const _0x2c19ba=_0x149d23,_0x5b73e6=document[_0x2c19ba(0x24b)](_0x2c19ba(0x254)+_0x10864e),_0x5d7cd1=_0x5b73e6[_0x2c19ba(0x22d)][_0x2c19ba(0x2ad)](_0x2c19ba(0x245));document[_0x2c19ba(0x230)](_0x2c19ba(0x247))[_0x2c19ba(0x1dd)](_0x5c4ccc=>_0x5c4ccc[_0x2c19ba(0x22d)]['remove'](_0x2c19ba(0x245)));if(!_0x5d7cd1)_0x5b73e6['classList'][_0x2c19ba(0x294)]('show');}function _0x3fd8(){const _0x37e3ef=['protocol','\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<td\x20style=\x22text-align:\x20center;\x22>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<input\x20type=\x22checkbox\x22\x20','Group','wtVal2','763674mfWRrl','DOMContentLoaded','</td>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<td\x20style=\x22color:\x20var(--text-muted);\x20font-size:\x200.7rem;\x20max-width:\x20150px;\x20overflow:\x20hidden;\x20text-overflow:\x20ellipsis;\x20white-space:\x20nowrap;\x22\x20title=\x22','\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20','Incorrect\x20PIN.\x20Access\x20Denied.','set','statCurIdx','active','.filter-box','filter','7458556iFkJKM',')</b></span>','Utf8','decrypt','book_append_sheet','retried','show','Execution\x20prohibited\x20on\x20unauthorized\x20host.','.dropdown-menu','WT:\x20','.JPG','confirmBtn','getElementById','closest','column','AG\x20Group','_karat','btn-action\x20btn-confirmed','dataset','.xlsx','Failed\x20to\x20load\x20data.enc.\x20Please\x20ensure\x20data.enc\x20is\x20in\x20the\x20same\x20folder.','menu-','between','error','createElement','selected','dispAG','lte','\x20-\x20','\x20onchange=\x22handleCheckboxChange(\x27','Sizes','passInput','K\x20|\x20P:\x20','center','chk-all-','</td>\x0a\x20\x20\x20\x20\x20\x20\x20\x20','max','key','Karats','toLowerCase','abs','Design_Catalog','toISOString','.dropdown-item','_size','_design','.jpg','127.0.0.1','<span\x20class=\x22ag-desc\x22>','localhost','20679444skiCBO','\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<div\x20style=\x22background:#090e1a;\x20color:#ef4444;\x20height:100vh;\x20display:flex;\x20flex-direction:column;\x20align-items:center;\x20justify-content:center;\x20font-family:sans-serif;\x20text-align:center;\x20padding:20px;\x22>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<h2\x20style=\x22margin-bottom:8px;\x20font-size:1.6rem;\x22>Access\x20Denied</h2>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<p\x20style=\x22color:#94a3b8;\x20font-size:0.95rem;\x22>Unauthorized\x20mirror\x20or\x20environment\x20detected.\x20Execution\x20halted.</p>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20</div>','.export-container','\x20.dropdown-btn','target','touchstart','itemImg','screenX','flexDirection','col','statRowCount','opacity','✔\x20Select\x20Remaining\x20SKUs\x20(','design','slice','12QTQEAZ','innerHTML','modalConfirmBtn','then','All\x20','Prolif','toUpperCase','Space','btn-action\x20btn-confirm','ArrowLeft','from','No\x20SKUs\x20or\x20designs\x20have\x20been\x20confirmed\x20yet.','7556145RiDLec',')</small></span>','dispSizesLabel','Could\x20not\x20find\x20data.enc','Variant\x20Weight\x20(WT)','\x20onchange=\x22toggleSingleSku(\x27','Selected_Specific_SKUs_','src','add','Focused\x20SKU:\x20','min','_group','\x20•\x20','#menu-','✔\x20Select\x20All\x20SKUs\x20for\x20Design','Selected\x20SKU\x20Size','INPUT','Std','enc','catch','_prolif','dispSizesText','hostname','dispGroup','statSelectedDesigns','stopPropagation','text','dispWtLabel','<span>','\x20<span\x20style=\x22color:var(--primary);\x20opacity:0.6;\x22>|</span>\x20','dispSelectedBadge','delete','Design','contains','Variant\x20SKUs','tagName','Please\x20enter\x20your\x20password\x20/\x20PIN.','N/A','modalIdxTag','onclick','modalFallback','exportMenu','dropdown-item','_wt','utils','dispKaratProlif','size','modalMetaTag','inline-block','includes','\x20|\x20','none','\x20of\x20','dispDesign','keys','authErr','Weight\x20Range\x20(WT)','1514721uRnzLJ','remove','click','.dropdown-search','\x27,\x20\x27','\x20selected-row','get','✖\x20Remove\x20Design','value','Prolifs','authOverlay','style','values','(Blank)','cardBody','lbl-all-','VARIANT','Selected_SKUs','skuSearchInput','every','flex','exportCount','innerText','sort','keydown','dispPartialBadge','alignItems','parse','✖\x20Remove\x20All\x20SKUs\x20for\x20Design','clear','actionsBar','_cat','AG\x20Groups','No\x20designs\x20match\x20the\x20selected\x20filter/search\x20criteria.','forEach','6048702aWrybo','className','\x20SKUs','\x0a\x20\x20\x20\x20\x20\x20\x20\x20<div\x20style=\x22font-size:\x203rem;\x20margin-bottom:\x206px;\x22>🖼️</div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20<div\x20style=\x22font-weight:\x20700;\x20color:\x20#334155;\x22>No\x20Catalog\x20Image\x20Found</div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20<div\x20style=\x22font-size:\x200.8rem;\x20color:\x20#94a3b8;\x20margin-top:\x204px;\x22>Design:\x20','code','querySelector','dispSkuCountLabel','list-','</td>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<td><b>','has','toFixed','wtBetweenSpan','authLoading','Incorrect\x20Password','wtOp','\x27,\x20this.checked)\x22>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20','</b></td>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<td><b>','resetFocusBtn','11849448NoijfS','imgFallback','Standard','imgLoader','Karat','changedTouches','<b>Selected\x20Variant\x20AG:</b>\x20','emptyMsg','Weight','</div>\x0a\x20\x20\x20\x20\x20\x20','justifyContent','display','lightboxModal','\x20.dropdown-search','dispCat','#fb-','block','https://jewbridge.titanjew.in/CatalogImages/api/ImageFetch/?Type=ProductImages&ImageName=','sravanarun.github.io','file:','toString','length','Selected_Unique_Designs_','modalDesignBadge','Size','join','any','\x20Selected','find','dispSkuCount','Standard\x20/\x20None','modalImgLoader','rows','modalImg','toggle','map','\x20focused-row','Available\x20Sizes','\x20designs','disabled','dispFocusedChip','_sku','✔\x20Confirm\x20Selection','split','location','indeterminate','prevBtn','AES','_ag','writeFile','push','body','checked','wtVal1','trim','addEventListener','Product\x20category','2KKCcwR','lightboxBody','preventDefault','json_to_sheet','classList','touchend','SKU','querySelectorAll'];_0x3fd8=function(){return _0x37e3ef;};return _0x3fd8();}window[_0x149d23(0x227)](_0x149d23(0x236),()=>{const _0x29a0ff=_0x149d23;dataFetchPromise=fetch('data.enc?t='+Date['now']())[_0x29a0ff(0x283)](_0x5902ba=>{const _0x5b3fce=_0x29a0ff;if(!_0x5902ba['ok'])throw new Error(_0x5b3fce(0x28f));return _0x5902ba[_0x5b3fce(0x2a6)]();})['then'](_0x14e9e4=>{return encryptedData=_0x14e9e4,_0x14e9e4;})[_0x29a0ff(0x29f)](_0x2f7d65=>{const _0x464bfa=_0x29a0ff;return console[_0x464bfa(0x256)](_0x2f7d65),null;});});async function decryptAndLoad(){const _0x3442f8=_0x149d23,_0x38e6e4=document['getElementById'](_0x3442f8(0x25e))[_0x3442f8(0x1c3)][_0x3442f8(0x226)](),_0x23c325=document[_0x3442f8(0x24b)](_0x3442f8(0x1b9)),_0x4f38f3=document[_0x3442f8(0x24b)](_0x3442f8(0x1ea)),_0x3cc4ba=document[_0x3442f8(0x24b)]('unlockBtn');_0x23c325[_0x3442f8(0x1c6)][_0x3442f8(0x1fb)]='none';if(!_0x38e6e4){_0x23c325['innerText']=_0x3442f8(0x2b0),_0x23c325[_0x3442f8(0x1c6)]['display']=_0x3442f8(0x200);return;}if(!encryptedData){_0x4f38f3[_0x3442f8(0x1c6)]['display']=_0x3442f8(0x200),_0x3cc4ba[_0x3442f8(0x217)]=!![];try{encryptedData=await dataFetchPromise;}catch(_0x13789a){console[_0x3442f8(0x256)](_0x13789a);}finally{_0x4f38f3['style']['display']=_0x3442f8(0x1b5),_0x3cc4ba[_0x3442f8(0x217)]=![];}}if(!encryptedData){_0x23c325[_0x3442f8(0x1d1)]=_0x3442f8(0x253),_0x23c325[_0x3442f8(0x1c6)]['display']=_0x3442f8(0x200);return;}try{const _0x42725f=CryptoJS[_0x3442f8(0x21f)][_0x3442f8(0x242)](encryptedData,_0x38e6e4),_0x23f27b=_0x42725f[_0x3442f8(0x204)](CryptoJS[_0x3442f8(0x29e)][_0x3442f8(0x241)]);if(!_0x23f27b)throw new Error(_0x3442f8(0x1eb));const _0x52af3c=atob(_0x23f27b),_0x4ef5ad=_0x52af3c[_0x3442f8(0x205)],_0x13de8e=new Uint8Array(_0x4ef5ad);for(let _0x347fa0=0x0;_0x347fa0<_0x4ef5ad;_0x347fa0++){_0x13de8e[_0x347fa0]=_0x52af3c['charCodeAt'](_0x347fa0);}const _0x55e491=pako['ungzip'](_0x13de8e,{'to':'string'}),_0x2198b5=JSON[_0x3442f8(0x1d6)](_0x55e491);rawData=[],_0x2198b5['forEach'](_0x58c7be=>{const _0x257057=_0x3442f8,_0x1d3f85=String(_0x58c7be[_0x257057(0x22f)]||_0x58c7be['Variant']||_0x58c7be[_0x257057(0x1cb)]||'')[_0x257057(0x226)]();if(!_0x1d3f85)return;_0x58c7be[_0x257057(0x219)]=_0x1d3f85,_0x58c7be[_0x257057(0x26c)]=String(_0x58c7be[_0x257057(0x2ac)]||(_0x1d3f85[_0x257057(0x205)]>=0x9?_0x1d3f85[_0x257057(0x27f)](0x2,0x9):_0x1d3f85))['trim']()['toUpperCase'](),_0x58c7be['_cat']=String(_0x58c7be[_0x257057(0x228)]||_0x58c7be['Category']||'')[_0x257057(0x226)](),_0x58c7be['_group']=String(_0x58c7be[_0x257057(0x233)]||'')[_0x257057(0x226)](),_0x58c7be[_0x257057(0x220)]=String(_0x58c7be['AG']||_0x58c7be[_0x257057(0x24e)]||'')[_0x257057(0x226)](),_0x58c7be[_0x257057(0x26b)]=String(_0x58c7be['Size']||'')[_0x257057(0x226)](),_0x58c7be[_0x257057(0x24f)]=String(_0x58c7be[_0x257057(0x1f4)]||'')[_0x257057(0x226)](),_0x58c7be[_0x257057(0x2a0)]=String(_0x58c7be[_0x257057(0x285)]||'')['trim'](),_0x58c7be[_0x257057(0x2b7)]=parseFloat(_0x58c7be['WT']||_0x58c7be[_0x257057(0x1f8)]||0x0)||0x0,rawData['push'](_0x58c7be);}),document[_0x3442f8(0x24b)](_0x3442f8(0x1c5))[_0x3442f8(0x1c6)][_0x3442f8(0x1fb)]=_0x3442f8(0x1b5),applyFilters();}catch(_0x526812){console[_0x3442f8(0x256)](_0x526812),_0x23c325[_0x3442f8(0x1d1)]=_0x3442f8(0x239),_0x23c325[_0x3442f8(0x1c6)][_0x3442f8(0x1fb)]=_0x3442f8(0x200);}}function handleUniversalSearch(){applyFilters();}function getContextualRows(_0x1803fc=null){const _0x4c03bb=_0x149d23,_0x34ab67=document[_0x4c03bb(0x24b)](_0x4c03bb(0x1ec))[_0x4c03bb(0x1c3)],_0x2ce49c=parseFloat(document[_0x4c03bb(0x24b)](_0x4c03bb(0x225))['value']),_0x3a7f9c=parseFloat(document[_0x4c03bb(0x24b)](_0x4c03bb(0x234))[_0x4c03bb(0x1c3)]),_0x526021=(document[_0x4c03bb(0x24b)]('skuSearchInput')?.[_0x4c03bb(0x1c3)]||'')[_0x4c03bb(0x226)]()[_0x4c03bb(0x266)]()[_0x4c03bb(0x21b)](/\s+/)[_0x4c03bb(0x23e)](Boolean);return rawData['filter'](_0x19600a=>{const _0x2b9356=_0x4c03bb;if(_0x526021[_0x2b9356(0x205)]>0x0){const _0x403328=(_0x19600a[_0x2b9356(0x219)]+'\x20'+_0x19600a[_0x2b9356(0x26c)]+'\x20'+_0x19600a[_0x2b9356(0x220)]+'\x20'+_0x19600a[_0x2b9356(0x1da)]+'\x20'+_0x19600a[_0x2b9356(0x297)])[_0x2b9356(0x266)](),_0x43560d=_0x526021[_0x2b9356(0x1ce)](_0x1e62c3=>_0x403328['includes'](_0x1e62c3));if(!_0x43560d)return![];}for(const _0x4d2277 of Object[_0x2b9356(0x1b8)](filterFields)){if(_0x4d2277===_0x1803fc)continue;const _0x9eb066=filterFields[_0x4d2277][_0x2b9356(0x258)];if(_0x9eb066['size']>0x0){const _0x2514fd=String(_0x19600a[filterFields[_0x4d2277][_0x2b9356(0x27a)]]||_0x2b9356(0x1c8))['trim']();if(!_0x9eb066[_0x2b9356(0x1e7)](_0x2514fd))return![];}}if(_0x34ab67!==_0x2b9356(0x20a)&&!isNaN(_0x2ce49c)){const _0x24c71c=_0x19600a['_wt'];if(_0x34ab67==='eq'&&Math[_0x2b9356(0x267)](_0x24c71c-_0x2ce49c)>0.0001)return![];if(_0x34ab67==='gt'&&_0x24c71c<=_0x2ce49c)return![];if(_0x34ab67==='gte'&&_0x24c71c<_0x2ce49c)return![];if(_0x34ab67==='lt'&&_0x24c71c>=_0x2ce49c)return![];if(_0x34ab67===_0x2b9356(0x25a)&&_0x24c71c>_0x2ce49c)return![];if(_0x34ab67===_0x2b9356(0x255)){if(isNaN(_0x3a7f9c))return![];if(_0x24c71c<Math[_0x2b9356(0x296)](_0x2ce49c,_0x3a7f9c)||_0x24c71c>Math[_0x2b9356(0x263)](_0x2ce49c,_0x3a7f9c))return![];}}return!![];});}function refreshDropdownMenus(){const _0x262ed8=_0x149d23;Object[_0x262ed8(0x1b8)](filterFields)['forEach'](_0x128cb2=>{const _0x2f0f66=_0x262ed8,_0x2f8abf=getContextualRows(_0x128cb2),_0x1eb1e3=filterFields[_0x128cb2][_0x2f0f66(0x27a)],_0x1d26c7={};_0x2f8abf['forEach'](_0x5b6377=>{const _0x26fe5c=_0x2f0f66,_0x1aef8c=String(_0x5b6377[_0x1eb1e3]||_0x26fe5c(0x1c8))[_0x26fe5c(0x226)]();_0x1d26c7[_0x1aef8c]=(_0x1d26c7[_0x1aef8c]||0x0)+0x1;}),filterFields[_0x128cb2][_0x2f0f66(0x258)]['forEach'](_0x24ad57=>{if(!_0x1d26c7[_0x24ad57])_0x1d26c7[_0x24ad57]=0x0;});const _0x2e0f75=document[_0x2f0f66(0x24b)](_0x2f0f66(0x1e5)+_0x128cb2),_0x4546ae=(document[_0x2f0f66(0x1e3)](_0x2f0f66(0x299)+_0x128cb2+_0x2f0f66(0x1fd))?.['value']||'')['toLowerCase']();_0x2e0f75['innerHTML']='';const _0x1fe45e=Object[_0x2f0f66(0x1b8)](_0x1d26c7)[_0x2f0f66(0x1d2)]();let _0x524544=0x0;_0x1fe45e[_0x2f0f66(0x1dd)](_0x49397e=>{const _0x4d3ec5=_0x2f0f66,_0x1c145e=filterFields[_0x128cb2]['selected'][_0x4d3ec5(0x1e7)](_0x49397e);if(_0x1c145e)_0x524544++;const _0x539d72=document[_0x4d3ec5(0x257)]('label');_0x539d72['className']=_0x4d3ec5(0x2b6);_0x4546ae&&!_0x49397e[_0x4d3ec5(0x266)]()[_0x4d3ec5(0x1b3)](_0x4546ae)&&(_0x539d72[_0x4d3ec5(0x1c6)][_0x4d3ec5(0x1fb)]=_0x4d3ec5(0x1b5));const _0x50013d=_0x128cb2==='ag'?_0x4d3ec5(0x26f)+_0x49397e['split']('|')[_0x4d3ec5(0x209)](_0x4d3ec5(0x2a9))+'\x20<b\x20style=\x22color:var(--primary);\x20font-size:0.75rem;\x22>('+_0x1d26c7[_0x49397e]+_0x4d3ec5(0x240):_0x4d3ec5(0x2a8)+_0x49397e+'\x20<small\x20style=\x22color:var(--text-muted)\x22>('+_0x1d26c7[_0x49397e]+_0x4d3ec5(0x28d);_0x539d72[_0x4d3ec5(0x281)]='\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<input\x20type=\x22checkbox\x22\x20value=\x22'+_0x49397e+'\x22\x20'+(_0x1c145e?'checked':'')+_0x4d3ec5(0x25c)+_0x128cb2+_0x4d3ec5(0x1bf)+_0x49397e+_0x4d3ec5(0x1ed)+_0x50013d+_0x4d3ec5(0x238),_0x2e0f75['appendChild'](_0x539d72);});const _0x12fc0a=document[_0x2f0f66(0x24b)](_0x2f0f66(0x261)+_0x128cb2),_0x8aabd8=document[_0x2f0f66(0x24b)](_0x2f0f66(0x1ca)+_0x128cb2);_0x12fc0a&&(_0x12fc0a[_0x2f0f66(0x224)]=_0x524544===_0x1fe45e[_0x2f0f66(0x205)]&&_0x1fe45e[_0x2f0f66(0x205)]>0x0,_0x12fc0a[_0x2f0f66(0x21d)]=_0x524544>0x0&&_0x524544<_0x1fe45e[_0x2f0f66(0x205)]),_0x8aabd8&&(_0x8aabd8[_0x2f0f66(0x1d1)]=_0x524544+'\x20/\x20'+_0x1fe45e['length']),updateDropdownBtnLabel(_0x128cb2);});}function toggleSelectAllDropdown(_0x2b48d5){const _0x4e765d=_0x149d23,_0x400294=getContextualRows(_0x2b48d5),_0x21c92f=filterFields[_0x2b48d5][_0x4e765d(0x27a)],_0xbe6773=Array['from'](new Set(_0x400294[_0x4e765d(0x213)](_0x58d7dd=>String(_0x58d7dd[_0x21c92f]||_0x4e765d(0x1c8))[_0x4e765d(0x226)]()))),_0x2fc532=_0xbe6773[_0x4e765d(0x205)]>0x0&&_0xbe6773['every'](_0x59b2df=>filterFields[_0x2b48d5][_0x4e765d(0x258)][_0x4e765d(0x1e7)](_0x59b2df));_0x2fc532?filterFields[_0x2b48d5][_0x4e765d(0x258)][_0x4e765d(0x1d8)]():_0xbe6773[_0x4e765d(0x1dd)](_0x27f4b3=>filterFields[_0x2b48d5][_0x4e765d(0x258)][_0x4e765d(0x294)](_0x27f4b3)),applyFilters();}function filterChecklist(_0x1ba036,_0x40583d){const _0x19e407=_0x149d23,_0x5d974d=_0x40583d[_0x19e407(0x266)](),_0xdc6803=document[_0x19e407(0x24b)](_0x19e407(0x1e5)+_0x1ba036);_0xdc6803['querySelectorAll'](_0x19e407(0x26a))['forEach'](_0x483889=>{const _0x13097f=_0x19e407,_0x190e15=_0x483889[_0x13097f(0x1d1)][_0x13097f(0x266)]();_0x483889[_0x13097f(0x1c6)]['display']=_0x190e15['includes'](_0x5d974d)?_0x13097f(0x1cf):_0x13097f(0x1b5);});}function _0x3573(_0x28977d,_0x5224d0){_0x28977d=_0x28977d-0x1af;const _0x3fd8ec=_0x3fd8();let _0x357364=_0x3fd8ec[_0x28977d];return _0x357364;}function handleCheckboxChange(_0x38c12c,_0x38515f,_0x35ead7){const _0xf304f6=_0x149d23;_0x35ead7?filterFields[_0x38c12c][_0xf304f6(0x258)][_0xf304f6(0x294)](_0x38515f):filterFields[_0x38c12c]['selected']['delete'](_0x38515f),applyFilters();}function updateDropdownBtnLabel(_0x1ff367){const _0x5af400=_0x149d23,_0x29b39c=document[_0x5af400(0x1e3)](_0x5af400(0x1ff)+_0x1ff367+_0x5af400(0x274)),_0x296749=filterFields[_0x1ff367][_0x5af400(0x258)][_0x5af400(0x1b0)],_0x4f46e0={'ag':_0x5af400(0x1db),'cat':'Categories','group':'Groups','karat':_0x5af400(0x265),'prolif':_0x5af400(0x1c4),'size':_0x5af400(0x25d)}[_0x1ff367];_0x29b39c[_0x5af400(0x1d1)]=_0x296749===0x0?_0x5af400(0x284)+_0x4f46e0:_0x296749+'\x20'+_0x4f46e0+_0x5af400(0x20b);}function handleWtOpChange(){const _0x50c2e7=_0x149d23,_0x3dd0af=document[_0x50c2e7(0x24b)](_0x50c2e7(0x1ec))[_0x50c2e7(0x1c3)],_0x41d6d7=document[_0x50c2e7(0x24b)]('wtVal1'),_0x1ce925=document[_0x50c2e7(0x24b)]('wtVal2'),_0x42b2fa=document[_0x50c2e7(0x24b)]('wtBetweenSpan');_0x41d6d7[_0x50c2e7(0x1c6)]['display']=_0x3dd0af===_0x50c2e7(0x20a)?_0x50c2e7(0x1b5):_0x50c2e7(0x1b2),_0x1ce925[_0x50c2e7(0x1c6)]['display']=_0x3dd0af===_0x50c2e7(0x255)?_0x50c2e7(0x1b2):_0x50c2e7(0x1b5),_0x42b2fa[_0x50c2e7(0x1c6)][_0x50c2e7(0x1fb)]=_0x3dd0af===_0x50c2e7(0x255)?_0x50c2e7(0x1b2):_0x50c2e7(0x1b5),applyFilters();}function resetAllFilters(){const _0x31956f=_0x149d23;Object[_0x31956f(0x1b8)](filterFields)[_0x31956f(0x1dd)](_0x3bf18a=>filterFields[_0x3bf18a][_0x31956f(0x258)]['clear']()),document[_0x31956f(0x24b)](_0x31956f(0x1cd))[_0x31956f(0x1c3)]='',document[_0x31956f(0x24b)]('wtOp')[_0x31956f(0x1c3)]=_0x31956f(0x20a),document['getElementById'](_0x31956f(0x225))[_0x31956f(0x1c3)]='',document[_0x31956f(0x24b)](_0x31956f(0x234))[_0x31956f(0x1c3)]='',document[_0x31956f(0x230)](_0x31956f(0x1be))[_0x31956f(0x1dd)](_0x5531bd=>_0x5531bd['value']='');const _0x59a3cc=document['getElementById'](_0x31956f(0x225)),_0x12f0f9=document[_0x31956f(0x24b)]('wtVal2'),_0x54f176=document[_0x31956f(0x24b)](_0x31956f(0x1e9));_0x59a3cc[_0x31956f(0x1c6)]['display']='none',_0x12f0f9['style'][_0x31956f(0x1fb)]=_0x31956f(0x1b5),_0x54f176[_0x31956f(0x1c6)][_0x31956f(0x1fb)]=_0x31956f(0x1b5),applyFilters();}function applyFilters(){const _0x32d21e=_0x149d23,_0xcdb73f=getContextualRows(null),_0x2b6454=new Map();_0xcdb73f[_0x32d21e(0x1dd)](_0xe39e0a=>{const _0x11e183=_0x32d21e;!_0x2b6454[_0x11e183(0x1e7)](_0xe39e0a['_design'])&&_0x2b6454[_0x11e183(0x23a)](_0xe39e0a['_design'],{'design':_0xe39e0a[_0x11e183(0x26c)],'rows':[]}),_0x2b6454[_0x11e183(0x1c1)](_0xe39e0a['_design'])[_0x11e183(0x210)][_0x11e183(0x222)](_0xe39e0a);}),filteredGroups=Array[_0x32d21e(0x28a)](_0x2b6454[_0x32d21e(0x1c7)]()),currentIdx=0x0,focusedSku=null,refreshDropdownMenus(),updateUI(_0xcdb73f['length']);}function getSelectedDesignsCount(){const _0x547ca5=_0x149d23,_0xc1b311=new Set();return selectedSkusMap[_0x547ca5(0x1dd)](_0x52a415=>_0xc1b311[_0x547ca5(0x294)](_0x52a415[_0x547ca5(0x26c)])),_0xc1b311[_0x547ca5(0x1b0)];}function resetVariantFocus(){focusedSku=null,updateUI();}function focusVariantRow(_0x34812b){focusedSku=focusedSku===_0x34812b?null:_0x34812b,updateUI();}function openLightbox(){const _0x213fab=_0x149d23;if(filteredGroups['length']===0x0)return;isLightboxOpen=!![],document[_0x213fab(0x24b)](_0x213fab(0x1fc))[_0x213fab(0x22d)]['add'](_0x213fab(0x23c)),syncLightboxContent();}function closeLightbox(){const _0x50eb65=_0x149d23;isLightboxOpen=![],document[_0x50eb65(0x24b)](_0x50eb65(0x1fc))['classList'][_0x50eb65(0x1bc)](_0x50eb65(0x23c));}function handleLightboxBackdropClick(_0x53456f){const _0x2d989c=_0x149d23;_0x53456f[_0x2d989c(0x275)]['id']===_0x2d989c(0x1fc)&&closeLightbox();}function syncLightboxContent(){const _0x38a258=_0x149d23;if(!isLightboxOpen||filteredGroups['length']===0x0)return;const _0x5ed3c8=filteredGroups[currentIdx],_0x404ddd=(_0x5ed3c8[_0x38a258(0x27e)]||'')[_0x38a258(0x226)]()[_0x38a258(0x286)]();let _0x368cf0=null;focusedSku&&(_0x368cf0=_0x5ed3c8['rows'][_0x38a258(0x20c)](_0x24c0f3=>_0x24c0f3[_0x38a258(0x219)]===focusedSku));document[_0x38a258(0x24b)](_0x38a258(0x207))[_0x38a258(0x1d1)]=_0x404ddd,document[_0x38a258(0x24b)](_0x38a258(0x1b1))[_0x38a258(0x1d1)]=_0x5ed3c8['rows'][0x0][_0x38a258(0x1da)]+_0x38a258(0x298)+_0x5ed3c8['rows'][0x0][_0x38a258(0x24f)]+'K';const _0x154ecd=document['getElementById']('modalWtTag');if(_0x368cf0)_0x154ecd['innerText']=_0x38a258(0x248)+_0x368cf0['_wt'][_0x38a258(0x1e8)](0x3)+'\x20g\x20('+(_0x368cf0[_0x38a258(0x26b)]||_0x38a258(0x29d))+')';else{const _0x36c140=_0x5ed3c8[_0x38a258(0x210)][_0x38a258(0x213)](_0x4e0b46=>_0x4e0b46['_wt']),_0x3fca1a=Math['min'](..._0x36c140)['toFixed'](0x3),_0x5088a1=Math[_0x38a258(0x263)](..._0x36c140)[_0x38a258(0x1e8)](0x3);_0x154ecd[_0x38a258(0x1d1)]=_0x3fca1a===_0x5088a1?_0x38a258(0x248)+_0x3fca1a+'\x20g':_0x38a258(0x248)+_0x3fca1a+_0x38a258(0x25b)+_0x5088a1+'\x20g';}document[_0x38a258(0x24b)](_0x38a258(0x2b2))[_0x38a258(0x1d1)]=currentIdx+0x1+_0x38a258(0x1b6)+filteredGroups['length'];const _0x3c2691=document[_0x38a258(0x24b)](_0x38a258(0x211)),_0x19b4dc=document[_0x38a258(0x24b)](_0x38a258(0x20f)),_0x51ba95=document[_0x38a258(0x24b)](_0x38a258(0x2b4));_0x3c2691[_0x38a258(0x1c6)]['opacity']='0',_0x3c2691[_0x38a258(0x1c6)][_0x38a258(0x1fb)]=_0x38a258(0x200),_0x51ba95[_0x38a258(0x1c6)]['display']=_0x38a258(0x1b5),_0x19b4dc[_0x38a258(0x1c6)][_0x38a258(0x1fb)]=_0x38a258(0x1cf),_0x3c2691[_0x38a258(0x251)]['retried']='0',_0x3c2691[_0x38a258(0x293)]='https://jewbridge.titanjew.in/CatalogImages/api/ImageFetch/?Type=ProductImages&ImageName='+_0x404ddd+_0x38a258(0x26d);const _0x42b652=_0x5ed3c8[_0x38a258(0x210)][_0x38a258(0x23e)](_0x29a34e=>selectedSkusMap['has'](_0x29a34e[_0x38a258(0x219)]))['length'],_0xfd618=_0x42b652===_0x5ed3c8[_0x38a258(0x210)]['length']&&_0x5ed3c8[_0x38a258(0x210)]['length']>0x0,_0x453464=document[_0x38a258(0x24b)](_0x38a258(0x282));_0xfd618?(_0x453464[_0x38a258(0x1d1)]=_0x38a258(0x1c2),_0x453464[_0x38a258(0x1df)]='btn-action\x20btn-confirmed'):(_0x453464['innerText']=_0x38a258(0x21a),_0x453464['className']=_0x38a258(0x288)),document[_0x38a258(0x24b)]('modalPrevBtn')[_0x38a258(0x217)]=currentIdx===0x0,document[_0x38a258(0x24b)]('modalNextBtn')[_0x38a258(0x217)]=currentIdx===filteredGroups[_0x38a258(0x205)]-0x1;}function handleModalImgSuccess(){const _0x1b4f67=_0x149d23;document[_0x1b4f67(0x24b)](_0x1b4f67(0x20f))[_0x1b4f67(0x1c6)][_0x1b4f67(0x1fb)]=_0x1b4f67(0x1b5),document[_0x1b4f67(0x24b)](_0x1b4f67(0x211))[_0x1b4f67(0x1c6)][_0x1b4f67(0x27c)]='1';}function handleModalImgError(){const _0x4feefc=_0x149d23,_0x3a3d18=document[_0x4feefc(0x24b)](_0x4feefc(0x211)),_0x14a6e5=filteredGroups[currentIdx],_0x52deb4=(_0x14a6e5?.['design']||'')[_0x4feefc(0x226)]()[_0x4feefc(0x286)]();if(_0x3a3d18[_0x4feefc(0x251)][_0x4feefc(0x244)]==='0'){_0x3a3d18[_0x4feefc(0x251)][_0x4feefc(0x244)]='1',_0x3a3d18[_0x4feefc(0x293)]=_0x4feefc(0x201)+_0x52deb4+_0x4feefc(0x249);return;}document['getElementById'](_0x4feefc(0x20f))[_0x4feefc(0x1c6)]['display']=_0x4feefc(0x1b5),_0x3a3d18[_0x4feefc(0x1c6)][_0x4feefc(0x1fb)]=_0x4feefc(0x1b5);const _0xd27c2a=document[_0x4feefc(0x24b)](_0x4feefc(0x2b4));_0xd27c2a[_0x4feefc(0x1c6)][_0x4feefc(0x1fb)]=_0x4feefc(0x1cf),_0xd27c2a[_0x4feefc(0x1c6)][_0x4feefc(0x279)]=_0x4feefc(0x24d),_0xd27c2a[_0x4feefc(0x1c6)][_0x4feefc(0x1d5)]=_0x4feefc(0x260),_0xd27c2a[_0x4feefc(0x1c6)]['justifyContent']=_0x4feefc(0x260),_0xd27c2a['innerHTML']=_0x4feefc(0x1e1)+(_0x52deb4||_0x4feefc(0x2b1))+_0x4feefc(0x1f9);}let touchStartX=0x0,touchEndX=0x0;const lightboxBody=document[_0x149d23(0x24b)](_0x149d23(0x22a));lightboxBody[_0x149d23(0x227)](_0x149d23(0x276),_0x4c143d=>{const _0x3dedfd=_0x149d23;touchStartX=_0x4c143d['changedTouches'][0x0][_0x3dedfd(0x278)];},{'passive':!![]}),lightboxBody[_0x149d23(0x227)](_0x149d23(0x22e),_0x259959=>{const _0x29f944=_0x149d23;touchEndX=_0x259959[_0x29f944(0x1f5)][0x0][_0x29f944(0x278)],handleSwipeGesture();},{'passive':!![]});function handleSwipeGesture(){const _0x565ab9=0x32;touchEndX<touchStartX-_0x565ab9&&navigateDesign(0x1),touchEndX>touchStartX+_0x565ab9&&navigateDesign(-0x1);}function updateUI(_0x4ce104=0x0){const _0x1f1611=_0x149d23;document[_0x1f1611(0x24b)]('statDesignCount')['innerText']=filteredGroups['length'],document[_0x1f1611(0x24b)](_0x1f1611(0x27b))[_0x1f1611(0x1d1)]='(SKUs:\x20'+_0x4ce104+')',document[_0x1f1611(0x24b)]('statMaxIdx')[_0x1f1611(0x1d1)]=filteredGroups[_0x1f1611(0x205)],document[_0x1f1611(0x24b)](_0x1f1611(0x1d0))[_0x1f1611(0x1d1)]=selectedSkusMap['size'],document[_0x1f1611(0x24b)]('statSelectedCount')[_0x1f1611(0x1d1)]=selectedSkusMap[_0x1f1611(0x1b0)]+_0x1f1611(0x1e0),document[_0x1f1611(0x24b)](_0x1f1611(0x2a4))[_0x1f1611(0x1d1)]=getSelectedDesignsCount()+_0x1f1611(0x216);const _0x1ed249=document[_0x1f1611(0x24b)](_0x1f1611(0x1f7)),_0x14744d=document[_0x1f1611(0x24b)](_0x1f1611(0x1c9)),_0x453ec1=document[_0x1f1611(0x24b)](_0x1f1611(0x1d9));if(filteredGroups[_0x1f1611(0x205)]===0x0){_0x1ed249[_0x1f1611(0x1c6)][_0x1f1611(0x1fb)]=_0x1f1611(0x200),_0x1ed249[_0x1f1611(0x1d1)]=rawData[_0x1f1611(0x205)]===0x0?'Catalogue\x20is\x20empty.':_0x1f1611(0x1dc),_0x14744d[_0x1f1611(0x1c6)][_0x1f1611(0x1fb)]=_0x1f1611(0x1b5),_0x453ec1[_0x1f1611(0x1c6)][_0x1f1611(0x1fb)]=_0x1f1611(0x1b5),document['getElementById']('statCurIdx')['innerText']='0';if(isLightboxOpen)closeLightbox();return;}_0x1ed249[_0x1f1611(0x1c6)]['display']=_0x1f1611(0x1b5),_0x14744d[_0x1f1611(0x1c6)][_0x1f1611(0x1fb)]=_0x1f1611(0x1cf),_0x453ec1[_0x1f1611(0x1c6)][_0x1f1611(0x1fb)]=_0x1f1611(0x1cf);const _0x33c67f=filteredGroups[currentIdx];document[_0x1f1611(0x24b)](_0x1f1611(0x23b))[_0x1f1611(0x1d1)]=currentIdx+0x1;const _0x4688a3=document[_0x1f1611(0x24b)]('itemImg'),_0x177d67=document[_0x1f1611(0x24b)](_0x1f1611(0x1f1)),_0x2c4c16=document[_0x1f1611(0x24b)](_0x1f1611(0x1f3));_0x4688a3[_0x1f1611(0x1c6)][_0x1f1611(0x27c)]='0',_0x4688a3[_0x1f1611(0x1c6)][_0x1f1611(0x1fb)]=_0x1f1611(0x200),_0x177d67[_0x1f1611(0x1c6)][_0x1f1611(0x1fb)]='none',_0x2c4c16[_0x1f1611(0x1c6)][_0x1f1611(0x1fb)]=_0x1f1611(0x1cf);const _0x371fac=(_0x33c67f['design']||'')[_0x1f1611(0x226)]()[_0x1f1611(0x286)]();_0x4688a3['dataset'][_0x1f1611(0x244)]='0',_0x4688a3[_0x1f1611(0x293)]=_0x1f1611(0x201)+_0x371fac+_0x1f1611(0x26d);if(filteredGroups[currentIdx+0x1]){const _0x2a4fe5=(filteredGroups[currentIdx+0x1]['design']||'')[_0x1f1611(0x226)]()[_0x1f1611(0x286)](),_0x2910ae=new Image();_0x2910ae[_0x1f1611(0x293)]=_0x1f1611(0x201)+_0x2a4fe5+_0x1f1611(0x26d);}let _0x187366=null;if(focusedSku){_0x187366=_0x33c67f[_0x1f1611(0x210)]['find'](_0x43c6a5=>_0x43c6a5[_0x1f1611(0x219)]===focusedSku);if(!_0x187366)focusedSku=null;}const _0x1e7dd1=document[_0x1f1611(0x24b)](_0x1f1611(0x218)),_0x2223ac=document[_0x1f1611(0x24b)](_0x1f1611(0x1ef));document[_0x1f1611(0x24b)](_0x1f1611(0x1b7))[_0x1f1611(0x1d1)]=_0x33c67f[_0x1f1611(0x27e)];if(_0x187366){_0x1e7dd1[_0x1f1611(0x1c6)][_0x1f1611(0x1fb)]='inline-block',_0x1e7dd1[_0x1f1611(0x1d1)]=_0x1f1611(0x295)+_0x187366[_0x1f1611(0x219)],_0x2223ac[_0x1f1611(0x1c6)]['display']=_0x1f1611(0x1b2),document[_0x1f1611(0x24b)](_0x1f1611(0x259))[_0x1f1611(0x281)]=_0x1f1611(0x1f6)+_0x187366[_0x1f1611(0x220)][_0x1f1611(0x21b)]('|')['join']('\x20<span\x20style=\x22color:var(--primary);\x20opacity:0.6;\x22>|</span>\x20'),document[_0x1f1611(0x24b)](_0x1f1611(0x1fe))[_0x1f1611(0x1d1)]=_0x187366[_0x1f1611(0x1da)]||'-',document[_0x1f1611(0x24b)]('dispGroup')[_0x1f1611(0x1d1)]=_0x187366['_group']||'-',document[_0x1f1611(0x24b)](_0x1f1611(0x1af))['innerText']=_0x187366[_0x1f1611(0x24f)]+_0x1f1611(0x25f)+_0x187366[_0x1f1611(0x2a0)],document[_0x1f1611(0x24b)](_0x1f1611(0x1e4))[_0x1f1611(0x1d1)]=_0x1f1611(0x29b),document[_0x1f1611(0x24b)](_0x1f1611(0x20d))['innerText']=_0x187366[_0x1f1611(0x26b)]||_0x1f1611(0x1f2),document[_0x1f1611(0x24b)]('dispSizesLabel')['innerText']='Design\x20Sizes';const _0x1a8382=Array[_0x1f1611(0x28a)](new Set(_0x33c67f['rows'][_0x1f1611(0x213)](_0x29bc44=>_0x29bc44['_size'])))[_0x1f1611(0x23e)](Boolean);document[_0x1f1611(0x24b)](_0x1f1611(0x2a1))['innerText']=_0x1a8382[_0x1f1611(0x209)](',\x20')||'Standard\x20/\x20None',document[_0x1f1611(0x24b)](_0x1f1611(0x2a7))[_0x1f1611(0x1d1)]=_0x1f1611(0x290),document[_0x1f1611(0x24b)]('dispWtRangeText')[_0x1f1611(0x1d1)]=_0x187366['_wt'][_0x1f1611(0x1e8)](0x3)+'\x20g';}else{_0x1e7dd1[_0x1f1611(0x1c6)][_0x1f1611(0x1fb)]=_0x1f1611(0x1b5),_0x2223ac['style'][_0x1f1611(0x1fb)]=_0x1f1611(0x1b5);const _0x52d01f=Array[_0x1f1611(0x28a)](new Set(_0x33c67f[_0x1f1611(0x210)][_0x1f1611(0x213)](_0x479219=>_0x479219[_0x1f1611(0x220)])))[_0x1f1611(0x23e)](Boolean);_0x52d01f[_0x1f1611(0x205)]>0x1?document[_0x1f1611(0x24b)]('dispAG')['innerHTML']='<span\x20style=\x22color:var(--primary);\x20font-weight:700;\x22>⚠\x20Design\x20spans\x20'+_0x52d01f[_0x1f1611(0x205)]+'\x20AG\x20Groups</span>\x20(Tap\x20a\x20row\x20below\x20to\x20inspect\x20each)':document[_0x1f1611(0x24b)](_0x1f1611(0x259))['innerHTML']=_0x52d01f[0x0]?_0x52d01f[0x0][_0x1f1611(0x21b)]('|')[_0x1f1611(0x209)](_0x1f1611(0x2a9)):_0x1f1611(0x2b1);document['getElementById'](_0x1f1611(0x1fe))[_0x1f1611(0x1d1)]=_0x33c67f[_0x1f1611(0x210)][0x0][_0x1f1611(0x1da)]||'-',document[_0x1f1611(0x24b)](_0x1f1611(0x2a3))[_0x1f1611(0x1d1)]=_0x33c67f[_0x1f1611(0x210)][0x0][_0x1f1611(0x297)]||'-',document[_0x1f1611(0x24b)](_0x1f1611(0x1af))[_0x1f1611(0x1d1)]=_0x33c67f[_0x1f1611(0x210)][0x0]['_karat']+'K\x20|\x20P:\x20'+_0x33c67f[_0x1f1611(0x210)][0x0][_0x1f1611(0x2a0)],document[_0x1f1611(0x24b)](_0x1f1611(0x1e4))['innerText']=_0x1f1611(0x2ae),document['getElementById']('dispSkuCount')[_0x1f1611(0x1d1)]=_0x33c67f[_0x1f1611(0x210)][_0x1f1611(0x205)]+'\x20SKU'+(_0x33c67f[_0x1f1611(0x210)]['length']>0x1?'s':''),document[_0x1f1611(0x24b)](_0x1f1611(0x28e))[_0x1f1611(0x1d1)]=_0x1f1611(0x215);const _0x54474e=Array[_0x1f1611(0x28a)](new Set(_0x33c67f[_0x1f1611(0x210)]['map'](_0x3bd137=>_0x3bd137[_0x1f1611(0x26b)])))['filter'](Boolean);document[_0x1f1611(0x24b)](_0x1f1611(0x2a1))[_0x1f1611(0x1d1)]=_0x54474e['join'](',\x20')||_0x1f1611(0x20e),document[_0x1f1611(0x24b)](_0x1f1611(0x2a7))[_0x1f1611(0x1d1)]=_0x1f1611(0x1ba);const _0x202262=_0x33c67f[_0x1f1611(0x210)][_0x1f1611(0x213)](_0x3bb542=>_0x3bb542[_0x1f1611(0x2b7)]),_0x53604d=Math[_0x1f1611(0x296)](..._0x202262)[_0x1f1611(0x1e8)](0x3),_0x1ff50c=Math['max'](..._0x202262)[_0x1f1611(0x1e8)](0x3);document[_0x1f1611(0x24b)]('dispWtRangeText')['innerText']=_0x53604d===_0x1ff50c?_0x53604d+'\x20g':_0x53604d+_0x1f1611(0x25b)+_0x1ff50c+'\x20g';}const _0x3412cb=_0x33c67f['rows']['filter'](_0x34f3ea=>selectedSkusMap['has'](_0x34f3ea['_sku']))[_0x1f1611(0x205)],_0x39091e=_0x3412cb===_0x33c67f[_0x1f1611(0x210)][_0x1f1611(0x205)]&&_0x33c67f[_0x1f1611(0x210)]['length']>0x0,_0x3f6ccd=_0x3412cb>0x0&&_0x3412cb<_0x33c67f[_0x1f1611(0x210)][_0x1f1611(0x205)],_0x56b53c=document['getElementById'](_0x1f1611(0x24a)),_0x573056=document[_0x1f1611(0x24b)](_0x1f1611(0x2aa)),_0xad6d7=document['getElementById'](_0x1f1611(0x1d4));if(_0x39091e)_0x56b53c[_0x1f1611(0x1d1)]=_0x1f1611(0x1d7),_0x56b53c[_0x1f1611(0x1df)]=_0x1f1611(0x250),_0x573056['style'][_0x1f1611(0x1fb)]=_0x1f1611(0x1b2),_0xad6d7[_0x1f1611(0x1c6)][_0x1f1611(0x1fb)]=_0x1f1611(0x1b5);else _0x3f6ccd?(_0x56b53c['innerText']=_0x1f1611(0x27d)+(_0x33c67f['rows']['length']-_0x3412cb)+')',_0x56b53c[_0x1f1611(0x1df)]=_0x1f1611(0x288),_0x573056[_0x1f1611(0x1c6)][_0x1f1611(0x1fb)]=_0x1f1611(0x1b5),_0xad6d7[_0x1f1611(0x1c6)][_0x1f1611(0x1fb)]=_0x1f1611(0x1b2)):(_0x56b53c[_0x1f1611(0x1d1)]=_0x1f1611(0x29a),_0x56b53c[_0x1f1611(0x1df)]=_0x1f1611(0x288),_0x573056[_0x1f1611(0x1c6)][_0x1f1611(0x1fb)]=_0x1f1611(0x1b5),_0xad6d7['style'][_0x1f1611(0x1fb)]=_0x1f1611(0x1b5));renderVariantTray(_0x33c67f),document[_0x1f1611(0x24b)](_0x1f1611(0x21e))[_0x1f1611(0x217)]=currentIdx===0x0,document[_0x1f1611(0x24b)]('nextBtn')[_0x1f1611(0x217)]=currentIdx===filteredGroups[_0x1f1611(0x205)]-0x1;if(isLightboxOpen)syncLightboxContent();}function handleImageSuccess(){const _0x25a85a=_0x149d23;document['getElementById']('imgLoader')[_0x25a85a(0x1c6)]['display']='none',document[_0x25a85a(0x24b)](_0x25a85a(0x277))['style'][_0x25a85a(0x27c)]='1';}function handleImageError(){const _0x4139ed=_0x149d23,_0x22107c=document[_0x4139ed(0x24b)]('itemImg'),_0x43d148=filteredGroups[currentIdx],_0xd4c7e0=(_0x43d148?.['design']||'')[_0x4139ed(0x226)]()[_0x4139ed(0x286)]();if(_0x22107c[_0x4139ed(0x251)][_0x4139ed(0x244)]==='0'){_0x22107c[_0x4139ed(0x251)][_0x4139ed(0x244)]='1',_0x22107c[_0x4139ed(0x293)]='https://jewbridge.titanjew.in/CatalogImages/api/ImageFetch/?Type=ProductImages&ImageName='+_0xd4c7e0+_0x4139ed(0x249);return;}document[_0x4139ed(0x24b)](_0x4139ed(0x1f3))['style'][_0x4139ed(0x1fb)]=_0x4139ed(0x1b5),_0x22107c[_0x4139ed(0x1c6)][_0x4139ed(0x1fb)]=_0x4139ed(0x1b5);const _0x3c7ec3=document['getElementById'](_0x4139ed(0x1f1));_0x3c7ec3[_0x4139ed(0x1c6)]['display']=_0x4139ed(0x1cf),_0x3c7ec3[_0x4139ed(0x1c6)][_0x4139ed(0x279)]=_0x4139ed(0x24d),_0x3c7ec3[_0x4139ed(0x1c6)][_0x4139ed(0x1d5)]=_0x4139ed(0x260),_0x3c7ec3['style'][_0x4139ed(0x1fa)]=_0x4139ed(0x260),_0x3c7ec3[_0x4139ed(0x281)]='\x0a\x20\x20\x20\x20\x20\x20\x20\x20<div\x20style=\x22font-size:\x202.2rem;\x20margin-bottom:\x206px;\x22>🖼️</div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20<div\x20style=\x22font-weight:\x20700;\x20color:\x20#334155;\x22>No\x20Catalog\x20Image\x20Found</div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20<div\x20style=\x22font-size:\x200.72rem;\x20color:\x20#94a3b8;\x20margin-top:\x204px;\x22>Design:\x20'+(_0xd4c7e0||_0x4139ed(0x2b1))+_0x4139ed(0x1f9);}function renderVariantTray(_0x5c5c40){const _0x459385=_0x149d23,_0x5746fa=document[_0x459385(0x24b)]('trayTbody');_0x5746fa[_0x459385(0x281)]='',_0x5c5c40[_0x459385(0x210)][_0x459385(0x1dd)](_0xb1b4d3=>{const _0x29eaf5=_0x459385,_0x3b6044=selectedSkusMap[_0x29eaf5(0x1e7)](_0xb1b4d3[_0x29eaf5(0x219)]),_0x4bc977=focusedSku===_0xb1b4d3[_0x29eaf5(0x219)],_0x29c2a8=document[_0x29eaf5(0x257)]('tr');let _0x33a760='variant-row';if(_0x3b6044)_0x33a760+=_0x29eaf5(0x1c0);if(_0x4bc977)_0x33a760+=_0x29eaf5(0x214);_0x29c2a8['className']=_0x33a760,_0x29c2a8[_0x29eaf5(0x2b3)]=_0x2c81fa=>{const _0x3614c5=_0x29eaf5;if(_0x2c81fa[_0x3614c5(0x275)][_0x3614c5(0x2af)]==='INPUT')return;focusVariantRow(_0xb1b4d3[_0x3614c5(0x219)]);};const _0x3b42e4=_0xb1b4d3[_0x29eaf5(0x220)]?_0xb1b4d3[_0x29eaf5(0x220)][_0x29eaf5(0x21b)]('|')[_0x29eaf5(0x27f)](0x0,0x3)[_0x29eaf5(0x209)](_0x29eaf5(0x1b4)):'-';_0x29c2a8['innerHTML']=_0x29eaf5(0x232)+(_0x3b6044?_0x29eaf5(0x224):'')+_0x29eaf5(0x291)+_0xb1b4d3[_0x29eaf5(0x219)]+'\x27,\x20this.checked,\x20event)\x22>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20</td>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<td\x20style=\x22font-family:\x20monospace;\x20color:\x20var(--primary);\x20font-weight:\x20700;\x22>'+_0xb1b4d3[_0x29eaf5(0x219)]+_0x29eaf5(0x1e6)+(_0xb1b4d3[_0x29eaf5(0x26b)]||'-')+_0x29eaf5(0x1ee)+_0xb1b4d3[_0x29eaf5(0x2b7)]['toFixed'](0x3)+'</b></td>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<td>'+_0xb1b4d3[_0x29eaf5(0x24f)]+'K</td>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<td>'+_0xb1b4d3[_0x29eaf5(0x2a0)]+_0x29eaf5(0x237)+_0xb1b4d3['_ag']+'\x22>'+_0x3b42e4+_0x29eaf5(0x262),_0x5746fa['appendChild'](_0x29c2a8);});}function toggleSingleSku(_0x2be1df,_0x428b77,_0x34442a){const _0x48559e=_0x149d23;if(_0x34442a)_0x34442a[_0x48559e(0x2a5)]();if(_0x428b77){const _0xfbc530=rawData[_0x48559e(0x20c)](_0x432d33=>_0x432d33[_0x48559e(0x219)]===_0x2be1df);if(_0xfbc530)selectedSkusMap[_0x48559e(0x23a)](_0x2be1df,_0xfbc530);}else selectedSkusMap[_0x48559e(0x2ab)](_0x2be1df);updateUI();}function toggleSelectAllCurrentDesign(){const _0x5a58c0=_0x149d23;if(filteredGroups[_0x5a58c0(0x205)]===0x0)return;const _0x2d73a2=filteredGroups[currentIdx],_0x1c71a8=_0x2d73a2[_0x5a58c0(0x210)][_0x5a58c0(0x1ce)](_0x125761=>selectedSkusMap[_0x5a58c0(0x1e7)](_0x125761[_0x5a58c0(0x219)]));_0x1c71a8?_0x2d73a2[_0x5a58c0(0x210)]['forEach'](_0x197183=>selectedSkusMap[_0x5a58c0(0x2ab)](_0x197183['_sku'])):_0x2d73a2['rows']['forEach'](_0x3d982e=>selectedSkusMap[_0x5a58c0(0x23a)](_0x3d982e['_sku'],_0x3d982e)),updateUI();}function navigateDesign(_0xea443b){const _0x312041=_0x149d23,_0xb4499f=currentIdx+_0xea443b;_0xb4499f>=0x0&&_0xb4499f<filteredGroups[_0x312041(0x205)]&&(currentIdx=_0xb4499f,focusedSku=null,updateUI());}window[_0x149d23(0x227)](_0x149d23(0x1d3),_0x178cc8=>{const _0x33531f=_0x149d23;if(filteredGroups[_0x33531f(0x205)]===0x0||_0x178cc8['target'][_0x33531f(0x2af)]===_0x33531f(0x29c)||_0x178cc8[_0x33531f(0x275)]['tagName']==='SELECT')return;if(_0x178cc8[_0x33531f(0x264)]==='ArrowRight')_0x178cc8[_0x33531f(0x22b)](),navigateDesign(0x1);else{if(_0x178cc8[_0x33531f(0x264)]===_0x33531f(0x289))_0x178cc8[_0x33531f(0x22b)](),navigateDesign(-0x1);else{if(_0x178cc8[_0x33531f(0x264)]==='\x20'||_0x178cc8[_0x33531f(0x1e2)]===_0x33531f(0x287))_0x178cc8[_0x33531f(0x22b)](),toggleSelectAllCurrentDesign();else _0x178cc8[_0x33531f(0x264)]==='Escape'&&isLightboxOpen&&closeLightbox();}}});function exportSelectedSkus(){const _0x263fcd=_0x149d23;document['getElementById']('exportMenu')[_0x263fcd(0x22d)][_0x263fcd(0x1bc)](_0x263fcd(0x245));if(selectedSkusMap[_0x263fcd(0x1b0)]===0x0){alert('No\x20SKUs\x20or\x20designs\x20have\x20been\x20confirmed\x20yet.');return;}const _0x2d1a32=[];selectedSkusMap[_0x263fcd(0x1dd)](_0x2403d2=>{const _0x99c9fa=_0x263fcd,_0xcbf369={..._0x2403d2};delete _0xcbf369['_sku'],delete _0xcbf369[_0x99c9fa(0x26c)],delete _0xcbf369[_0x99c9fa(0x1da)],delete _0xcbf369[_0x99c9fa(0x297)],delete _0xcbf369[_0x99c9fa(0x220)],delete _0xcbf369[_0x99c9fa(0x26b)],delete _0xcbf369['_karat'],delete _0xcbf369[_0x99c9fa(0x2a0)],delete _0xcbf369[_0x99c9fa(0x2b7)],_0x2d1a32['push'](_0xcbf369);});const _0x3ef38d=XLSX['utils'][_0x263fcd(0x22c)](_0x2d1a32),_0x568b5b=XLSX[_0x263fcd(0x2b8)]['book_new']();XLSX[_0x263fcd(0x2b8)][_0x263fcd(0x243)](_0x568b5b,_0x3ef38d,_0x263fcd(0x1cc));const _0x4a3d24=new Date()[_0x263fcd(0x269)]()['slice'](0x0,0xa);XLSX[_0x263fcd(0x221)](_0x568b5b,_0x263fcd(0x292)+_0x4a3d24+_0x263fcd(0x252));}function exportSelectedDesigns(){const _0x578ff2=_0x149d23;document['getElementById'](_0x578ff2(0x2b5))[_0x578ff2(0x22d)]['remove'](_0x578ff2(0x245));if(selectedSkusMap[_0x578ff2(0x1b0)]===0x0){alert(_0x578ff2(0x28b));return;}const _0x3f9a26=new Map();selectedSkusMap[_0x578ff2(0x1dd)](_0x3b39cd=>{const _0x262b88=_0x578ff2;!_0x3f9a26[_0x262b88(0x1e7)](_0x3b39cd[_0x262b88(0x26c)])&&_0x3f9a26[_0x262b88(0x23a)](_0x3b39cd[_0x262b88(0x26c)],[]),_0x3f9a26[_0x262b88(0x1c1)](_0x3b39cd[_0x262b88(0x26c)])[_0x262b88(0x222)](_0x3b39cd);});const _0x528cab=[];_0x3f9a26[_0x578ff2(0x1dd)]((_0x250d4d,_0x3e0a77)=>{const _0x12b468=_0x578ff2,_0x3ef5d3=Array[_0x12b468(0x28a)](new Set(_0x250d4d[_0x12b468(0x213)](_0x46d866=>_0x46d866[_0x12b468(0x26b)])))['filter'](Boolean)['join'](',\x20'),_0x5f0b90=_0x250d4d[_0x12b468(0x213)](_0x3f6ebc=>_0x3f6ebc[_0x12b468(0x2b7)]),_0x4459ce=Math[_0x12b468(0x296)](..._0x5f0b90)[_0x12b468(0x1e8)](0x3),_0x27235b=Math['max'](..._0x5f0b90)[_0x12b468(0x1e8)](0x3);_0x528cab[_0x12b468(0x222)]({'Design\x20Code':_0x3e0a77,'Product\x20Category':_0x250d4d[0x0]['_cat'],'Group':_0x250d4d[0x0][_0x12b468(0x297)],'Karat':_0x250d4d[0x0][_0x12b468(0x24f)],'Prolif':_0x250d4d[0x0][_0x12b468(0x2a0)],'AG\x20Group':_0x250d4d[0x0][_0x12b468(0x220)],'Selected\x20SKU\x20Count':_0x250d4d[_0x12b468(0x205)],'Available\x20Sizes':_0x3ef5d3||'Standard','Weight\x20Range\x20(g)':_0x4459ce===_0x27235b?_0x4459ce:_0x4459ce+_0x12b468(0x25b)+_0x27235b});});const _0x4bfee3=XLSX[_0x578ff2(0x2b8)]['json_to_sheet'](_0x528cab),_0x56529c=XLSX[_0x578ff2(0x2b8)]['book_new']();XLSX[_0x578ff2(0x2b8)][_0x578ff2(0x243)](_0x56529c,_0x4bfee3,_0x578ff2(0x268));const _0x5b520d=new Date()[_0x578ff2(0x269)]()['slice'](0x0,0xa);XLSX['writeFile'](_0x56529c,_0x578ff2(0x206)+_0x5b520d+_0x578ff2(0x252));}
+    // Strict Domain Security Guardrail
+    (function() {
+      const allowedDomain = "sravanarun.github.io";
+      const isLocalHost = window.location.hostname === "localhost" || 
+                          window.location.hostname === "127.0.0.1" || 
+                          window.location.protocol === "file:";
+
+      if (window.location.hostname !== allowedDomain && !isLocalHost) {
+        document.body.innerHTML = `
+          <div style="background:#090e1a; color:#ef4444; height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; font-family:sans-serif; text-align:center; padding:20px;">
+            <h2 style="margin-bottom:8px; font-size:1.6rem;">Access Denied</h2>
+            <p style="color:#94a3b8; font-size:0.95rem;">Unauthorized mirror or environment detected. Execution halted.</p>
+          </div>`;
+        throw new Error("Execution prohibited on unauthorized host.");
+      }
+    })();
+
+    let rawData = [];
+    let filteredGroups = [];
+    let selectedVariantsMap = new Map();
+    let currentIdx = 0;
+    let activeStoreFilter = null;
+    let encryptedData = "";
+    let dataFetchPromise = null;
+    let isLightboxOpen = false;
+
+    const filterFields = {
+      store: { col: 'Storecode', selected: new Set() },
+      cat: { col: 'Product category', selected: new Set() },
+      cluster: { col: 'CLUSTER', selected: new Set() },
+      ag: { col: 'AG', selected: new Set() },
+      size: { col: 'Size', selected: new Set() },
+      karat: { col: 'Karat', selected: new Set() },
+      prolif: { col: 'Prolif', selected: new Set() }
+    };
+
+    window.addEventListener('click', (e) => {
+      if (!e.target.closest('.filter-box')) document.querySelectorAll('.dropdown-menu').forEach(m => m.classList.remove('show'));
+    });
+
+    function toggleDropdown(key) {
+      const menu = document.getElementById(`menu-${key}`);
+      const isShown = menu.classList.contains('show');
+      document.querySelectorAll('.dropdown-menu').forEach(m => m.classList.remove('show'));
+      if (!isShown) menu.classList.add('show');
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      dataFetchPromise = fetch(`data.enc?t=${Date.now()}`)
+        .then(res => {
+          if (!res.ok) throw new Error("Could not find data.enc");
+          return res.text();
+        })
+        .then(text => {
+          encryptedData = text;
+          return text;
+        })
+        .catch(err => {
+          console.error(err);
+          return null;
+        });
+    });
+
+    async function decryptAndLoad() {
+      const pin = document.getElementById('passInput').value.trim();
+      const errBox = document.getElementById('authErr');
+      const loadBox = document.getElementById('authLoading');
+      const btn = document.getElementById('unlockBtn');
+
+      errBox.style.display = 'none';
+
+      if (!pin) {
+        errBox.innerText = "Please enter your password / PIN.";
+        errBox.style.display = 'block';
+        return;
+      }
+
+      if (!encryptedData) {
+        loadBox.style.display = 'block';
+        btn.disabled = true;
+        try {
+          encryptedData = await dataFetchPromise;
+        } catch (e) {
+          console.error(e);
+        } finally {
+          loadBox.style.display = 'none';
+          btn.disabled = false;
+        }
+      }
+
+      if (!encryptedData) {
+        errBox.innerText = "Failed to load data.enc file. Verify repository files.";
+        errBox.style.display = 'block';
+        return;
+      }
+
+      try {
+        const bytes = CryptoJS.AES.decrypt(encryptedData, pin);
+        const base64Compressed = bytes.toString(CryptoJS.enc.Utf8);
+        if (!base64Compressed) throw new Error("Incorrect Password");
+
+        const binaryStr = atob(base64Compressed);
+        const len = binaryStr.length;
+        const bytesArr = new Uint8Array(len);
+        for (let i = 0; i < len; i++) {
+          bytesArr[i] = binaryStr.charCodeAt(i);
+        }
+        const decompressedJsonStr = pako.ungzip(bytesArr, { to: 'string' });
+
+        const parsedRows = JSON.parse(decompressedJsonStr);
+        rawData = [];
+
+        parsedRows.forEach(r => {
+          const getVal = (colNames) => {
+            for (const name of colNames) {
+              for (const key of Object.keys(r)) {
+                if (key.trim().toLowerCase() === name.toLowerCase()) return String(r[key] || '').trim();
+              }
+            }
+            return '';
+          };
+
+          const variant = getVal(['Variant', 'VARIANT', 'Variant Code', 'SKU']);
+          if (!variant) return;
+
+          r._variant = variant;
+          r._design = variant.length >= 9 ? variant.slice(2, 9).toUpperCase() : variant.toUpperCase();
+          r._store = getVal(['Storecode', 'Store Code', 'STORECODE', 'STORE']);
+          r._cat = getVal(['Product category', 'PRODUCT CATEGORY', 'Category', 'Cat']);
+          r._cluster = getVal(['CLUSTER', 'Cluster']);
+          r._ag = getVal(['AG', 'AG Group', 'AG_GROUP']);
+          r._size = getVal(['Size', 'SIZE']);
+          r._karat = getVal(['Karat', 'KARAT']);
+          r._prolif = getVal(['Prolif', 'PROLIF']);
+          r._wt = parseFloat(getVal(['WT', 'Weight', 'Gross Wt'])) || 0;
+
+          rawData.push(r);
+        });
+
+        document.getElementById('authOverlay').style.display = 'none';
+        applyFilters();
+      } catch (e) {
+        console.error(e);
+        errBox.innerText = "Incorrect PIN. Access Denied.";
+        errBox.style.display = 'block';
+      }
+    }
+
+    function handleUniversalSearch() {
+      applyFilters();
+    }
+
+    function getContextualRows(excludeKey = null) {
+      const wtOp = document.getElementById('wtOp').value;
+      const wt1 = parseFloat(document.getElementById('wtVal1').value);
+      const wt2 = parseFloat(document.getElementById('wtVal2').value);
+      const searchTerms = (document.getElementById('skuSearchInput')?.value || '').trim().toLowerCase().split(/\s+/).filter(Boolean);
+
+      return rawData.filter(r => {
+        if (searchTerms.length > 0) {
+          const searchableText = `${r._variant} ${r._design} ${r._store} ${r._cat} ${r._cluster} ${r._ag}`.toLowerCase();
+          const allMatch = searchTerms.every(term => searchableText.includes(term));
+          if (!allMatch) return false;
+        }
+
+        for (const key of Object.keys(filterFields)) {
+          if (key === excludeKey) continue;
+          const sel = filterFields[key].selected;
+          if (sel.size > 0 && !sel.has(String(r[filterFields[key].col] || '(Blank)').trim())) return false;
+        }
+
+        if (wtOp !== 'any' && !isNaN(wt1)) {
+          const w = r._wt;
+          if (wtOp === 'eq' && Math.abs(w - wt1) > 0.0001) return false;
+          if (wtOp === 'gt' && w <= wt1) return false;
+          if (wtOp === 'gte' && w < wt1) return false;
+          if (wtOp === 'lt' && w >= wt1) return false;
+          if (wtOp === 'lte' && w > wt1) return false;
+          if (wtOp === 'between') {
+            if (isNaN(wt2)) return false;
+            if (w < Math.min(wt1, wt2) || w > Math.max(wt1, wt2)) return false;
+          }
+        }
+        return true;
+      });
+    }
+
+    function refreshDropdownMenus() {
+      Object.keys(filterFields).forEach(key => {
+        const eligibleRows = getContextualRows(key);
+        const colField = filterFields[key].col;
+        const counts = {};
+        eligibleRows.forEach(r => {
+          const val = String(r[colField] || '(Blank)').trim();
+          counts[val] = (counts[val] || 0) + 1;
+        });
+
+        filterFields[key].selected.forEach(selVal => {
+          if (!counts[selVal]) counts[selVal] = 0;
+        });
+
+        const listContainer = document.getElementById(`list-${key}`);
+        const currentSearch = (document.querySelector(`#menu-${key} .dropdown-search`)?.value || '').toLowerCase();
+        listContainer.innerHTML = '';
+
+        const allAvailableKeys = Object.keys(counts).sort();
+        let checkedCount = 0;
+
+        allAvailableKeys.forEach(val => {
+          const isChecked = filterFields[key].selected.has(val);
+          if (isChecked) checkedCount++;
+          const item = document.createElement('label');
+          item.className = 'dropdown-item';
+          if (currentSearch && !val.toLowerCase().includes(currentSearch)) {
+            item.style.display = 'none';
+          }
+          item.innerHTML = `<input type="checkbox" value="${val}" ${isChecked ? 'checked' : ''} onchange="handleCheckboxChange('${key}', '${val}', this.checked)"><span>${val} <small style="color:var(--text-muted)">(${counts[val]})</small></span>`;
+          listContainer.appendChild(item);
+        });
+
+        const selectAllChk = document.getElementById(`chk-all-${key}`);
+        const selectAllLbl = document.getElementById(`lbl-all-${key}`);
+        if (selectAllChk) {
+          selectAllChk.checked = (checkedCount === allAvailableKeys.length && allAvailableKeys.length > 0);
+          selectAllChk.indeterminate = (checkedCount > 0 && checkedCount < allAvailableKeys.length);
+        }
+        if (selectAllLbl) {
+          selectAllLbl.innerText = `${checkedCount} / ${allAvailableKeys.length}`;
+        }
+
+        updateDropdownBtnLabel(key);
+      });
+    }
+
+    function toggleSelectAllDropdown(key) {
+      const eligibleRows = getContextualRows(key);
+      const colField = filterFields[key].col;
+      const allVals = Array.from(new Set(eligibleRows.map(r => String(r[colField] || '(Blank)').trim())));
+
+      const isAllCurrentlySelected = allVals.length > 0 && allVals.every(v => filterFields[key].selected.has(v));
+
+      if (isAllCurrentlySelected) {
+        filterFields[key].selected.clear();
+      } else {
+        allVals.forEach(v => filterFields[key].selected.add(v));
+      }
+      applyFilters();
+    }
+
+    function filterChecklist(key, search) {
+      const s = search.toLowerCase();
+      const container = document.getElementById(`list-${key}`);
+      container.querySelectorAll('.dropdown-item').forEach(lbl => {
+        const txt = lbl.innerText.toLowerCase();
+        lbl.style.display = txt.includes(s) ? 'flex' : 'none';
+      });
+    }
+
+    function handleCheckboxChange(key, val, isChecked) {
+      if (isChecked) filterFields[key].selected.add(val);
+      else filterFields[key].selected.delete(val);
+      applyFilters();
+    }
+
+    function updateDropdownBtnLabel(key) {
+      const btn = document.querySelector(`#fb-${key} .dropdown-btn`);
+      const count = filterFields[key].selected.size;
+      const baseName = { store:'Stores', cat:'Categories', cluster:'Clusters', ag:'AGs', size:'Sizes', karat:'Karats', prolif:'Prolifs' }[key];
+      btn.innerText = count === 0 ? `All ${baseName}` : `${count} ${baseName} Selected`;
+    }
+
+    function handleWtOpChange() {
+      const op = document.getElementById('wtOp').value;
+      const v1 = document.getElementById('wtVal1'), v2 = document.getElementById('wtVal2'), sp = document.getElementById('wtBetweenSpan');
+      v1.style.display = op === 'any' ? 'none' : 'inline-block';
+      v2.style.display = op === 'between' ? 'inline-block' : 'none';
+      sp.style.display = op === 'between' ? 'inline-block' : 'none';
+      applyFilters();
+    }
+
+    function resetAllFilters() {
+      Object.keys(filterFields).forEach(key => filterFields[key].selected.clear());
+      document.getElementById('skuSearchInput').value = '';
+      document.getElementById('wtOp').value = 'any';
+      document.getElementById('wtVal1').value = '';
+      document.getElementById('wtVal2').value = '';
+      document.querySelectorAll('.dropdown-search').forEach(input => input.value = '');
+
+      const v1 = document.getElementById('wtVal1');
+      const v2 = document.getElementById('wtVal2');
+      const span = document.getElementById('wtBetweenSpan');
+      v1.style.display = 'none';
+      v2.style.display = 'none';
+      span.style.display = 'none';
+
+      applyFilters();
+    }
+
+    function applyFilters() {
+      const rows = getContextualRows(null);
+      const groupMap = new Map();
+      rows.forEach(r => {
+        if (!groupMap.has(r._variant)) groupMap.set(r._variant, { variant: r._variant, design: r._design, rows: [] });
+        groupMap.get(r._variant).rows.push(r);
+      });
+      filteredGroups = Array.from(groupMap.values());
+      currentIdx = 0;
+      activeStoreFilter = null;
+      refreshDropdownMenus();
+      updateUI(rows.length);
+    }
+
+    function updateUI(totalMatchedRows) {
+      document.getElementById('statVariantCount').innerText = filteredGroups.length;
+      document.getElementById('statMaxIdx').innerText = filteredGroups.length;
+      document.getElementById('exportCount').innerText = selectedVariantsMap.size;
+      document.getElementById('statSelectedCount').innerText = selectedVariantsMap.size;
+
+      const count = (totalMatchedRows !== undefined) ? totalMatchedRows : filteredGroups.reduce((acc, g) => acc + g.rows.length, 0);
+      document.getElementById('statTotalUnits').innerText = `(Total Units: ${count})`;
+
+      if (filteredGroups.length === 0) return;
+      const cur = filteredGroups[currentIdx];
+      document.getElementById('statCurIdx').innerText = currentIdx + 1;
+
+      const img = document.getElementById('itemImg');
+      img.style.opacity = '0';
+      img.style.display = 'block';
+      document.getElementById('imgFallback').style.display = 'none';
+      document.getElementById('imgLoader').style.display = 'flex';
+
+      const dCode = (cur.design || '').trim().toUpperCase();
+      img.dataset.retried = "0";
+      img.src = `https://jewbridge.titanjew.in/CatalogImages/api/ImageFetch/?Type=ProductImages&ImageName=${dCode}.jpg`;
+
+      if (filteredGroups[currentIdx + 1]) {
+        const nextD = (filteredGroups[currentIdx + 1].design || '').trim().toUpperCase();
+        const p = new Image();
+        p.src = `https://jewbridge.titanjew.in/CatalogImages/api/ImageFetch/?Type=ProductImages&ImageName=${nextD}.jpg`;
+      }
+
+      document.getElementById('dispVariant').innerText = cur.variant;
+      document.getElementById('dispAG').innerText = cur.rows[0]._ag || 'N/A';
+      document.getElementById('dispCat').innerText = cur.rows[0]._cat || '-';
+      document.getElementById('dispCluster').innerText = cur.rows[0]._cluster || '-';
+      document.getElementById('dispKaratProlif').innerText = `${cur.rows[0]._karat}K | P: ${cur.rows[0]._prolif}`;
+
+      const totalQty = cur.rows.length;
+      document.getElementById('dispTotalQty').innerText = `${totalQty} pcs`;
+
+      const sizes = Array.from(new Set(cur.rows.map(r => r._size))).filter(Boolean);
+      document.getElementById('dispSizesText').innerText = sizes.join(', ') || 'N/A';
+
+      const weights = cur.rows.map(r => r._wt);
+      document.getElementById('dispWtRangeText').innerText = `${Math.min(...weights).toFixed(3)} - ${Math.max(...weights).toFixed(3)} g`;
+
+      const storeMap = {};
+      cur.rows.forEach(r => { storeMap[r._store] = (storeMap[r._store] || 0) + 1; });
+      const storeKeys = Object.keys(storeMap).sort();
+      document.getElementById('dispStoreCount').innerText = storeKeys.length;
+
+      const storeChips = document.getElementById('dispStoreChips');
+      storeChips.innerHTML = '';
+      const allC = document.createElement('div');
+      allC.className = `chip ${activeStoreFilter === null ? 'active' : ''}`;
+      allC.innerText = `All (${totalQty})`;
+      allC.onclick = () => { activeStoreFilter = null; renderDetailedTray(cur); updateStoreChipsUI(); };
+      storeChips.appendChild(allC);
+
+      storeKeys.forEach(st => {
+        const c = document.createElement('div');
+        c.className = `chip ${activeStoreFilter === st ? 'active' : ''}`;
+        c.innerText = `${st} (${storeMap[st]})`;
+        c.onclick = () => { activeStoreFilter = activeStoreFilter === st ? null : st; renderDetailedTray(cur); updateStoreChipsUI(); };
+        storeChips.appendChild(c);
+      });
+
+      const isConf = selectedVariantsMap.has(cur.variant);
+      const confBtn = document.getElementById('confirmBtn');
+      confBtn.innerText = isConf ? "✖ Remove Selection" : "✔ Confirm";
+      confBtn.className = isConf ? "btn-action btn-confirmed" : "btn-action btn-confirm";
+      document.getElementById('dispSelectedBadge').style.display = isConf ? "inline-block" : "none";
+
+      renderDetailedTray(cur);
+      document.getElementById('prevBtn').disabled = currentIdx === 0;
+      document.getElementById('nextBtn').disabled = currentIdx === filteredGroups.length - 1;
+
+      if (isLightboxOpen) syncLightboxContent();
+    }
+
+    function updateStoreChipsUI() {
+      document.querySelectorAll('#dispStoreChips .chip').forEach((c, i) => {
+        c.className = i === 0 ? `chip ${activeStoreFilter === null ? 'active' : ''}` : `chip ${c.innerText.startsWith(activeStoreFilter + ' ') ? 'active' : ''}`;
+      });
+    }
+
+    function renderDetailedTray(cur) {
+      const tbody = document.getElementById('trayTbody');
+      tbody.innerHTML = '';
+      const rows = activeStoreFilter ? cur.rows.filter(r => r._store === activeStoreFilter) : cur.rows;
+      document.getElementById('trayHeader').innerText = activeStoreFilter ? `Available Lots for ${activeStoreFilter} (${rows.length} lots)` : `Available Lots (All Stores - ${rows.length} lots)`;
+      rows.forEach(r => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td><b>${r._store}</b></td><td style="font-family:monospace; color:var(--primary);">${r['Lotno']}</td><td>${r['Qty'] || 1}</td><td><b>${r._wt.toFixed(3)}</b></td><td>${r._size}</td><td>₹${Number(r['Val']||0).toLocaleString('en-IN')}</td>`;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function handleImageSuccess() {
+      document.getElementById('imgLoader').style.display = 'none';
+      document.getElementById('itemImg').style.opacity = '1';
+    }
+
+    function handleImageError() {
+      const img = document.getElementById('itemImg');
+      const cur = filteredGroups[currentIdx];
+      const dCode = (cur?.design || '').trim().toUpperCase();
+
+      if (img.dataset.retried === "0") {
+        img.dataset.retried = "1";
+        img.src = `https://jewbridge.titanjew.in/CatalogImages/api/ImageFetch/?Type=ProductImages&ImageName=${dCode}.JPG`;
+        return;
+      }
+
+      document.getElementById('imgLoader').style.display = 'none';
+      img.style.display = 'none';
+      const fallback = document.getElementById('imgFallback');
+      fallback.style.display = 'flex';
+      fallback.style.flexDirection = 'column';
+      fallback.style.alignItems = 'center';
+      fallback.style.justifyContent = 'center';
+      fallback.innerHTML = `
+        <div style="font-size: 2.2rem; margin-bottom: 6px;">🖼️</div>
+        <div style="font-weight: 700; color: #334155;">No Catalog Image Found</div>
+        <div style="font-size: 0.72rem; color: #94a3b8; margin-top: 4px;">Design: ${dCode || 'N/A'}</div>
+      `;
+    }
+
+    /* Lightbox Modal Operations */
+    function openLightbox() {
+      if (filteredGroups.length === 0) return;
+      isLightboxOpen = true;
+      document.getElementById('lightboxModal').classList.add('active');
+      syncLightboxContent();
+    }
+
+    function closeLightbox() {
+      isLightboxOpen = false;
+      document.getElementById('lightboxModal').classList.remove('active');
+    }
+
+    function handleLightboxBackdropClick(e) {
+      if (e.target.id === 'lightboxModal') {
+        closeLightbox();
+      }
+    }
+
+    function syncLightboxContent() {
+      if (!isLightboxOpen || filteredGroups.length === 0) return;
+
+      const curGroup = filteredGroups[currentIdx];
+      const dCode = (curGroup.design || '').trim().toUpperCase();
+
+      document.getElementById('modalDesignBadge').innerText = dCode;
+      document.getElementById('modalMetaTag').innerText = `${curGroup.rows[0]._cat} • ${curGroup.rows[0]._karat}K`;
+      
+      const weights = curGroup.rows.map(r => r._wt);
+      const minWt = Math.min(...weights).toFixed(3);
+      const maxWt = Math.max(...weights).toFixed(3);
+      document.getElementById('modalWtTag').innerText = (minWt === maxWt) ? `WT: ${minWt} g` : `WT: ${minWt} - ${maxWt} g`;
+      document.getElementById('modalIdxTag').innerText = `${currentIdx + 1} of ${filteredGroups.length}`;
+
+      const modalImg = document.getElementById('modalImg');
+      const modalLoader = document.getElementById('modalImgLoader');
+      const modalFallback = document.getElementById('modalFallback');
+
+      modalImg.style.opacity = '0';
+      modalImg.style.display = 'block';
+      modalFallback.style.display = 'none';
+      modalLoader.style.display = 'flex';
+
+      modalImg.dataset.retried = "0";
+      modalImg.src = `https://jewbridge.titanjew.in/CatalogImages/api/ImageFetch/?Type=ProductImages&ImageName=${dCode}.jpg`;
+
+      const isConf = selectedVariantsMap.has(curGroup.variant);
+      const modalConfirmBtn = document.getElementById('modalConfirmBtn');
+      modalConfirmBtn.innerText = isConf ? "✖ Remove Selection" : "✔ Confirm Selection";
+      modalConfirmBtn.className = isConf ? "btn-action btn-confirmed" : "btn-action btn-confirm";
+
+      document.getElementById('modalPrevBtn').disabled = (currentIdx === 0);
+      document.getElementById('modalNextBtn').disabled = (currentIdx === filteredGroups.length - 1);
+    }
+
+    function handleModalImgSuccess() {
+      document.getElementById('modalImgLoader').style.display = 'none';
+      document.getElementById('modalImg').style.opacity = '1';
+    }
+
+    function handleModalImgError() {
+      const img = document.getElementById('modalImg');
+      const curGroup = filteredGroups[currentIdx];
+      const dCode = (curGroup?.design || '').trim().toUpperCase();
+
+      if (img.dataset.retried === "0") {
+        img.dataset.retried = "1";
+        img.src = `https://jewbridge.titanjew.in/CatalogImages/api/ImageFetch/?Type=ProductImages&ImageName=${dCode}.JPG`;
+        return;
+      }
+
+      document.getElementById('modalImgLoader').style.display = 'none';
+      img.style.display = 'none';
+      const fallback = document.getElementById('modalFallback');
+      fallback.style.display = 'flex';
+      fallback.style.flexDirection = 'column';
+      fallback.style.alignItems = 'center';
+      fallback.style.justifyContent = 'center';
+      fallback.innerHTML = `
+        <div style="font-size: 3rem; margin-bottom: 6px;">🖼️</div>
+        <div style="font-weight: 700; color: #334155;">No Catalog Image Found</div>
+        <div style="font-size: 0.8rem; color: #94a3b8; margin-top: 4px;">Design: ${dCode || 'N/A'}</div>
+      `;
+    }
+
+    let touchStartX = 0;
+    let touchEndX = 0;
+    const lightboxBody = document.getElementById('lightboxBody');
+
+    lightboxBody.addEventListener('touchstart', (e) => {
+      touchStartX = e.changedTouches[0].screenX;
+    }, { passive: true });
+
+    lightboxBody.addEventListener('touchend', (e) => {
+      touchEndX = e.changedTouches[0].screenX;
+      if (touchEndX < touchStartX - 50) navigateVariant(1);
+      if (touchEndX > touchStartX + 50) navigateVariant(-1);
+    }, { passive: true });
+
+    function toggleConfirmCurrent() {
+      const cur = filteredGroups[currentIdx];
+      if (selectedVariantsMap.has(cur.variant)) selectedVariantsMap.delete(cur.variant);
+      else selectedVariantsMap.set(cur.variant, cur.rows);
+      updateUI();
+    }
+
+    function navigateVariant(s) {
+      const n = currentIdx + s;
+      if (n >= 0 && n < filteredGroups.length) { 
+        currentIdx = n; 
+        activeStoreFilter = null; 
+        updateUI(); 
+      }
+    }
+
+    window.addEventListener('keydown', (e) => {
+      if (filteredGroups.length === 0 || e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
+      if (e.key === 'ArrowRight') {
+        e.preventDefault();
+        navigateVariant(1);
+      } else if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        navigateVariant(-1);
+      } else if (e.key === ' ' || e.code === 'Space') {
+        e.preventDefault();
+        toggleConfirmCurrent();
+      } else if (e.key === 'Escape' && isLightboxOpen) {
+        closeLightbox();
+      }
+    });
+
+    /* Export Modal Management */
+    function openExportModal() {
+      if (selectedVariantsMap.size === 0) { 
+        alert("No variants confirmed yet."); 
+        return; 
+      }
+      document.getElementById('exportModal').classList.add('active');
+    }
+
+    function closeExportModal() {
+      document.getElementById('exportModal').classList.remove('active');
+    }
+
+    /* Option 1: Existing Excel Export */
+    function exportSelectedExcel() {
+      closeExportModal();
+      const rows = [];
+      selectedVariantsMap.forEach(grp => grp.forEach(r => {
+        const c = { ...r };
+        delete c._variant; delete c._design; delete c._store; delete c._cat; delete c._cluster; delete c._ag; delete c._size; delete c._karat; delete c._prolif; delete c._wt;
+        rows.push(c);
+      }));
+      const ws = XLSX.utils.json_to_sheet(rows);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Selected");
+      XLSX.writeFile(wb, `South1_Selected_${new Date().toISOString().slice(0,10)}.xlsx`);
+    }
+
+    /* Option 2: Configurable Grid PDF Export */
+    async function exportSelectedPDF() {
+      const actionBtn = document.getElementById('pdfExportActionBtn');
+      actionBtn.disabled = true;
+      actionBtn.innerText = "⏳ Generating PDF...";
+
+      const incVariant = document.getElementById('pdfChkVariant').checked;
+      const incWt = document.getElementById('pdfChkWt').checked;
+      const incCat = document.getElementById('pdfChkCat').checked;
+      const incAg = document.getElementById('pdfChkAg').checked;
+      const incSize = document.getElementById('pdfChkSize').checked;
+      const incKarat = document.getElementById('pdfChkKarat').checked;
+
+      const { jsPDF } = window.jspdf;
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pageWidth = 210;
+      const pageHeight = 297;
+
+      // 2 Columns x 3 Rows per page
+      const cols = 2;
+      const rowsPerPage = 3;
+      const itemsPerPage = cols * rowsPerPage;
+      const cardWidth = 90;
+      const cardHeight = 82;
+      const startX = 12;
+      const startY = 18;
+      const gapX = 6;
+      const gapY = 8;
+
+      let itemIndex = 0;
+      const uniqueVariants = Array.from(selectedVariantsMap.values());
+
+      for (const grp of uniqueVariants) {
+        if (itemIndex > 0 && itemIndex % itemsPerPage === 0) {
+          pdf.addPage();
+        }
+
+        const pagePos = itemIndex % itemsPerPage;
+        const col = pagePos % cols;
+        const row = Math.floor(pagePos / cols);
+
+        const x = startX + col * (cardWidth + gapX);
+        const y = startY + row * (cardHeight + gapY);
+
+        // Draw Card Boundary
+        pdf.setDrawColor(220, 226, 235);
+        pdf.setFillColor(255, 255, 255);
+        pdf.roundedRect(x, y, cardWidth, cardHeight, 3, 3, 'FD');
+
+        // Image Fetch & Render
+        const firstRow = grp[0];
+        const dCode = (firstRow._design || '').trim().toUpperCase();
+        const imgUrl = `https://jewbridge.titanjew.in/CatalogImages/api/ImageFetch/?Type=ProductImages&ImageName=${dCode}.jpg`;
+
+        try {
+          const base64Img = await fetchImageAsBase64(imgUrl);
+          pdf.addImage(base64Img, 'JPEG', x + 15, y + 4, 60, 48);
+        } catch (e) {
+          pdf.setFontSize(8);
+          pdf.setTextColor(150, 150, 150);
+          pdf.text("Image Unavailable", x + cardWidth / 2, y + 28, { align: 'center' });
+        }
+
+        // Draw Text Attributes Under Image
+        let currentTextY = y + 56;
+        pdf.setFontSize(9);
+        pdf.setTextColor(15, 23, 42);
+        pdf.setFont('helvetica', 'bold');
+
+        if (incVariant) {
+          pdf.text(firstRow._variant, x + 6, currentTextY);
+          currentTextY += 4.5;
+        }
+
+        pdf.setFontSize(7.5);
+        pdf.setFont('helvetica', 'normal');
+        pdf.setTextColor(71, 85, 105);
+
+        if (incWt) {
+          const weights = grp.map(r => r._wt);
+          const minWt = Math.min(...weights).toFixed(3);
+          const maxWt = Math.max(...weights).toFixed(3);
+          const wtStr = minWt === maxWt ? `${minWt} g` : `${minWt} - ${maxWt} g`;
+          pdf.text(`Weight: ${wtStr}`, x + 6, currentTextY);
+          currentTextY += 4;
+        }
+
+        if (incCat) {
+          pdf.text(`Cat: ${firstRow._cat || 'N/A'}`, x + 6, currentTextY);
+          currentTextY += 4;
+        }
+
+        if (incAg) {
+          const agTrimmed = (firstRow._ag || 'N/A').substring(0, 36);
+          pdf.text(`AG: ${agTrimmed}`, x + 6, currentTextY);
+          currentTextY += 4;
+        }
+
+        if (incSize) {
+          const sizes = Array.from(new Set(grp.map(r => r._size))).filter(Boolean).join(', ');
+          pdf.text(`Sizes: ${sizes || 'N/A'}`, x + 6, currentTextY);
+          currentTextY += 4;
+        }
+
+        if (incKarat) {
+          pdf.text(`Karat: ${firstRow._karat}K | Prolif: ${firstRow._prolif}`, x + 6, currentTextY);
+        }
+
+        itemIndex++;
+      }
+
+      pdf.save(`South1_Visual_Catalog_${new Date().toISOString().slice(0,10)}.pdf`);
+      actionBtn.disabled = false;
+      actionBtn.innerText = "📄 Generate Visual PDF";
+      closeExportModal();
+    }
+
+    // Helper to bypass canvas cross-origin restrictions safely
+    function fetchImageAsBase64(url) {
+      return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.crossOrigin = 'Anonymous';
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          canvas.width = img.naturalWidth || 400;
+          canvas.height = img.naturalHeight || 400;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0);
+          resolve(canvas.toDataURL('image/jpeg', 0.85));
+        };
+        img.onerror = () => reject(new Error('Image fetch failed'));
+        img.src = url;
+      });
+    }
   </script>
 </body>
 </html>
